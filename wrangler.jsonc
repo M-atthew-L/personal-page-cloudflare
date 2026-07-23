@@ -1,0 +1,14 @@
+{
+  // Your site's project name. Becomes <name>.workers.dev
+  // Lowercase letters, numbers, and hyphens only.
+  "name": "personal-site",
+
+  // Pins Cloudflare's runtime behaviour to this date.
+  // Leave it alone unless you have a reason to bump it.
+  "compatibility_date": "2026-07-23",
+
+  // Everything in ./public gets served. index.html is the homepage.
+  "assets": {
+    "directory": "./public"
+  }
+}

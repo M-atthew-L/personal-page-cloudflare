@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Your Name — index</title>
+<meta name="description" content="Projects, research, and thoughts.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200;0,6..72,300;0,6..72,400;1,6..72,200;1,6..72,300;1,6..72,400&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+/* ─────────────────────────────────────────────
+   TOKENS — two inks on cool stock
+   Newsreader carries display + body. DM Mono
+   handles labels, dates, and structure only.
+   ───────────────────────────────────────────── */
+:root{
+  --paper:#e7e5ec;
+  --ink:#191921;
+  --blue:#2b2be0;   /* projects, research, writing */
+  --pink:#ff5470;   /* poems only */
+  --mute:#82818f;
+  --rule:rgba(25,25,33,.13);
+  --rule-hard:rgba(25,25,33,.26);
+
+  --f-text:"Newsreader",Georgia,"Times New Roman",serif;
+  --f-util:"DM Mono",ui-monospace,"SF Mono",Menlo,monospace;
+
+  --measure:62ch;
+  --pad:clamp(1.25rem,5vw,4rem);
+}
+
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--f-text);
+  font-size:clamp(1rem,.95rem + .25vw,1.0625rem);
+  line-height:1.62;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* paper grain, dialled back */
+body::before{
+  content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+  opacity:.26;mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='.4'/%3E%3C/svg%3E");
+}
+
+.wrap{position:relative;z-index:1;max-width:72rem;margin:0 auto;padding:0 var(--pad) 7rem}
+
+a{color:var(--blue);text-decoration:none}
+a:focus-visible,button:focus-visible{outline:2px solid var(--blue);outline-offset:3px;border-radius:2px}
+
+/* ─────────────────────────────────────────────
+   MASTHEAD — the name stays quiet. The
+   registration mark carries the riso identity.
+   ───────────────────────────────────────────── */
+.masthead{
+  display:flex;flex-wrap:wrap;gap:1.25rem;align-items:center;
+  justify-content:space-between;padding:3rem 0 2rem;
+}
+
+.wordmark{
+  display:inline-flex;align-items:center;gap:.7rem;
+  font-family:var(--f-text);font-weight:400;font-size:1.1875rem;
+  letter-spacing:.01em;color:var(--ink);
+  background:none;border:0;padding:0;cursor:pointer;
+}
+.wordmark:hover{color:var(--blue)}
+.regmark{
+  position:relative;width:.6rem;height:.6rem;flex:0 0 auto;
+  background:var(--blue);mix-blend-mode:multiply;border-radius:50%;
+}
+.regmark::after{
+  content:"";position:absolute;inset:0;border-radius:50%;
+  background:var(--pink);mix-blend-mode:multiply;
+  transform:translate(5px,3px);
+  animation:register 1.1s cubic-bezier(.16,1,.3,1) .2s forwards;
+}
+@keyframes register{to{transform:translate(2px,1px)}}
+
+.nav{display:flex;gap:1.5rem;font-family:var(--f-util);font-size:.72rem;
+  text-transform:uppercase;letter-spacing:.12em;font-weight:400}
+.nav button{
+  background:none;border:0;padding:.2rem 0;cursor:pointer;font:inherit;
+  color:var(--mute);border-bottom:1px solid transparent;transition:color .15s,border-color .15s;
+}
+.nav button:hover{color:var(--ink)}
+.nav button[aria-current="true"]{color:var(--ink);border-bottom-color:var(--ink)}
+
+/* ─────────────────────────────────────────────
+   STATEMENT
+   ───────────────────────────────────────────── */
+.statement{border-top:1px solid var(--rule-hard);padding:4rem 0 4.5rem}
+.statement h1{
+  font-family:var(--f-text);font-weight:200;
+  font-size:clamp(1.9rem,1.15rem + 3.2vw,3.5rem);
+  line-height:1.12;letter-spacing:-.02em;
+  margin:0 0 1.75rem;max-width:19ch;
+}
+.statement h1 em{font-style:italic;color:var(--blue);mix-blend-mode:multiply}
+.statement p{margin:0;max-width:50ch;color:#3a3a46}
+
+/* ─────────────────────────────────────────────
+   PROGRESS — ink weight encodes commitment:
+   solid = moving, ring = queued, grey = idea
+   ───────────────────────────────────────────── */
+.progress{border-top:1px solid var(--rule);padding:2.5rem 0 3.25rem}
+.progress-list{list-style:none;margin:0;padding:0}
+.progress-list li{
+  display:grid;grid-template-columns:.55rem 6rem 1fr;gap:1.25rem;
+  align-items:baseline;padding:.75rem 0;border-bottom:1px solid var(--rule);
+  max-width:62rem;
+}
+.progress-list li:last-child{border-bottom:0}
+.dot{
+  width:.55rem;height:.55rem;border-radius:50%;
+  transform:translateY(-.08em);mix-blend-mode:multiply;
+}
+.dot.building{background:var(--blue)}
+.dot.queued{border:1.5px solid var(--blue)}
+.dot.idea{border:1.5px solid var(--mute)}
+.progress-state{
+  font-family:var(--f-util);font-size:.66rem;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--blue);mix-blend-mode:multiply;
+}
+.progress-state.idea{color:var(--mute)}
+.progress-text{max-width:54ch}
+.progress-note{display:block;color:var(--mute);font-size:.9375rem;margin-top:.2rem}
+
+/* ── inline editing ── */
+.progress-list li{position:relative;padding-right:2rem}
+button.dot{border:0;padding:0;cursor:pointer;background:none;appearance:none}
+button.dot:hover{opacity:.6}
+.row-x{
+  position:absolute;right:0;top:.6rem;
+  background:none;border:0;cursor:pointer;padding:.25rem .3rem;line-height:1;
+  font-family:var(--f-util);font-size:.85rem;color:var(--mute);
+  opacity:0;transition:opacity .15s,color .15s;
+}
+.progress-list li:hover .row-x,.row-x:focus-visible{opacity:1}
+.row-x:hover{color:var(--ink)}
+
+.progress-add{
+  display:inline-flex;align-items:center;gap:.6rem;margin-top:1.2rem;
+  background:none;border:0;padding:.25rem 0;cursor:pointer;
+  font-family:var(--f-util);font-size:.7rem;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--mute);
+}
+.progress-add:hover{color:var(--blue)}
+.progress-add .plus{font-size:1rem;line-height:1;margin-top:-.1em}
+
+.composer{margin-top:1.4rem;padding-top:1.2rem;border-top:1px solid var(--rule-hard);max-width:52rem}
+.composer input{
+  width:100%;background:none;border:0;border-bottom:1px solid var(--rule);
+  font-family:var(--f-text);font-size:1.0625rem;color:var(--ink);padding:.45rem 0;
+}
+.composer input::placeholder{color:var(--mute)}
+.composer input:focus{outline:0;border-bottom-color:var(--blue)}
+.tones{display:flex;gap:1.4rem;align-items:center;margin-top:1.1rem;flex-wrap:wrap}
+.tone{
+  display:inline-flex;align-items:center;gap:.5rem;background:none;border:0;
+  cursor:pointer;padding:.25rem 0;font-family:var(--f-util);font-size:.66rem;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--mute);
+  border-bottom:1px solid transparent;
+}
+.tone:hover{color:var(--ink)}
+.tone[aria-pressed="true"]{color:var(--ink);border-bottom-color:var(--ink)}
+.composer-actions{margin-left:auto;display:flex;gap:1.4rem}
+.linkbtn{
+  background:none;border:0;cursor:pointer;padding:.25rem 0;
+  font-family:var(--f-util);font-size:.66rem;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--mute);
+}
+.linkbtn:hover{color:var(--ink)}
+.linkbtn.primary{color:var(--blue)}
+.export{margin-top:1.4rem}
+.export p{margin:0 0 .5rem;font-size:.9375rem;color:var(--mute);max-width:52ch}
+
+/* ─────────────────────────────────────────────
+   INDEX
+   ───────────────────────────────────────────── */
+.plate-label{
+  font-family:var(--f-util);font-size:.68rem;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--mute);margin:0 0 1.5rem;
+}
+.filters{display:flex;flex-wrap:wrap;gap:1.5rem;margin:0}
+.filters button{
+  font-family:var(--f-util);font-size:.72rem;letter-spacing:.12em;
+  text-transform:uppercase;background:none;border:0;padding:.2rem 0;
+  cursor:pointer;color:var(--mute);
+  border-bottom:1px solid transparent;transition:color .15s,border-color .15s;
+}
+.filters button:hover{color:var(--ink)}
+.filters button[aria-pressed="true"]{color:var(--ink);border-bottom-color:var(--ink)}
+
+.ledger{border-top:1px solid var(--rule-hard);margin-top:1.75rem}
+.row{
+  display:grid;grid-template-columns:5.5rem 1fr auto;gap:1.25rem;
+  align-items:baseline;width:100%;background:none;border:0;
+  border-bottom:1px solid var(--rule);padding:1.35rem .1rem;
+  cursor:pointer;text-align:left;font:inherit;color:var(--ink);
+  transition:padding-left .2s ease,border-color .2s;
+}
+.row:hover,.row:focus-visible{padding-left:.7rem;border-bottom-color:var(--rule-hard)}
+.row-kind{
+  font-family:var(--f-util);font-size:.66rem;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--blue);mix-blend-mode:multiply;
+}
+.row[data-kind="poem"] .row-kind{color:var(--pink)}
+.row-title{font-size:1.125rem;line-height:1.35}
+.row[data-kind="poem"] .row-title{font-style:italic;font-weight:300}
+.row-sub{display:block;font-size:.9375rem;color:var(--mute);margin-top:.25rem;max-width:50ch}
+.row-date{font-family:var(--f-util);font-size:.72rem;color:var(--mute);white-space:nowrap}
+
+/* ─────────────────────────────────────────────
+   READER
+   ───────────────────────────────────────────── */
+.back{
+  font-family:var(--f-util);font-size:.7rem;letter-spacing:.12em;
+  text-transform:uppercase;background:none;border:0;padding:.5rem 0;
+  cursor:pointer;color:var(--mute);
+}
+.back:hover{color:var(--blue)}
+
+.piece{padding:2.5rem 0 4rem;max-width:var(--measure)}
+.piece-meta{
+  font-family:var(--f-util);font-size:.68rem;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--mute);margin:0 0 1rem;
+}
+.piece h2{
+  font-family:var(--f-text);font-weight:200;letter-spacing:-.018em;
+  font-size:clamp(1.7rem,1.2rem + 1.9vw,2.6rem);line-height:1.14;margin:0 0 2.25rem;
+}
+.piece-body{font-size:1.1875rem;line-height:1.74}
+.piece-body p{margin:0 0 1.35em}
+.piece-body a{border-bottom:1px solid rgba(43,43,224,.3)}
+
+/* poems — own ink, own measure */
+.piece.poem{max-width:44ch}
+.piece.poem .piece-meta{color:var(--pink);mix-blend-mode:multiply}
+.piece.poem h2{font-weight:300;font-style:italic}
+.piece.poem .piece-body{white-space:pre-wrap;font-weight:300;font-size:1.25rem;line-height:1.85}
+.piece.poem::after{
+  content:"";display:block;width:2rem;height:.3rem;margin-top:2.75rem;
+  background:var(--pink);mix-blend-mode:multiply;
+}
+
+/* research — sources sit under the writing */
+.sources{list-style:none;margin:2.75rem 0 0;padding:1.25rem 0 0;border-top:1px solid var(--rule-hard)}
+.sources li{padding:.55rem 0;font-size:1rem}
+.sources li a{border-bottom:1px solid rgba(43,43,224,.3)}
+.sources-label{
+  font-family:var(--f-util);font-size:.68rem;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--mute);margin:0 0 .35rem;
+}
+.piece-link{
+  display:inline-block;margin-top:.4rem;font-family:var(--f-util);
+  font-size:.76rem;letter-spacing:.05em;border-bottom:1px solid var(--blue);padding-bottom:2px;
+}
+
+/* ─────────────────────────────────────────────
+   ABOUT + FOOT
+   ───────────────────────────────────────────── */
+.about{padding:2.5rem 0 3rem;max-width:var(--measure)}
+.about h2{font-family:var(--f-text);font-weight:200;letter-spacing:-.018em;
+  font-size:clamp(1.7rem,1.2rem + 1.9vw,2.6rem);margin:0 0 2rem}
+.about p{font-size:1.125rem;margin:0 0 1.3em}
+.contact{list-style:none;margin:2.75rem 0 0;padding:0;border-top:1px solid var(--rule)}
+.contact li{display:flex;gap:1.5rem;padding:.75rem 0;border-bottom:1px solid var(--rule)}
+.contact span{font-family:var(--f-util);font-size:.68rem;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--mute);min-width:5.5rem}
+
+.foot{
+  border-top:1px solid var(--rule);margin-top:3.5rem;padding-top:1.25rem;
+  display:flex;flex-wrap:wrap;gap:1rem;justify-content:space-between;
+  font-family:var(--f-util);font-size:.68rem;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--mute);
+}
+
+[hidden]{display:none !important}
+
+@media (max-width:36rem){
+  .row{grid-template-columns:1fr auto;gap:.35rem 1rem}
+  .row-kind{grid-column:1/-1}
+  .progress-list li{grid-template-columns:.55rem 1fr;gap:.35rem .9rem}
+  .progress-state{grid-column:2}
+  .progress-text{grid-column:2}
+  .filters{gap:1.1rem}
+  .masthead{padding:2rem 0 1.5rem}
+  .statement{padding:2.75rem 0 3.25rem}
+}
+
+@media (prefers-reduced-motion:reduce){
+  *{animation:none !important;transition:none !important}
+  .regmark::after{transform:translate(2px,1px)}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="masthead">
+    <button class="wordmark" id="wordmark" aria-label="Home">
+      <span class="regmark" aria-hidden="true"></span>Your Name
+    </button>
+    <nav class="nav" aria-label="Sections">
+      <button data-view="index" aria-current="true">Index</button>
+      <button data-view="about">About</button>
+    </nav>
+  </header>
+
+  <main id="main">
+
+    <!-- ══ INDEX ══ -->
+    <div id="view-index">
+      <section class="statement">
+        <h1>I build small things and <em>write down</em> what happens.</h1>
+        <p>Everything lives in one list — projects, open research, and thoughts, newest first. Blue ink is work and prose. Pink is poems.</p>
+      </section>
+
+      <section class="progress" aria-labelledby="progress-label">
+        <p class="plate-label" id="progress-label">Progress</p>
+        <ul class="progress-list" id="progress-list"></ul>
+
+        <button class="progress-add" id="progress-add">
+          <span class="plus" aria-hidden="true">+</span> Add an item
+        </button>
+
+        <div class="composer" id="composer" hidden>
+          <input id="composer-input" type="text" autocomplete="off"
+                 placeholder="What are you working on, planning, or want to write about?"
+                 aria-label="New progress item">
+          <div class="tones" role="group" aria-label="Ink tone">
+            <button class="tone" data-tone="building" aria-pressed="true"><span class="dot building"></span>Building</button>
+            <button class="tone" data-tone="queued" aria-pressed="false"><span class="dot queued"></span>Queued</button>
+            <button class="tone" data-tone="idea" aria-pressed="false"><span class="dot idea"></span>Idea</button>
+            <span class="composer-actions">
+              <button class="linkbtn" id="composer-cancel">Cancel</button>
+              <button class="linkbtn primary" id="composer-save">Add</button>
+            </span>
+          </div>
+        </div>
+
+        <div class="export" id="export" hidden>
+          <p>Changes live in this browser tab only. Copy the list and paste it over the <code>PROGRESS</code> array in the file to keep them.</p>
+          <button class="linkbtn primary" id="copy-list">Copy updated list →</button>
+        </div>
+      </section>
+
+      <section aria-labelledby="index-label">
+        <p class="plate-label" id="index-label">Index</p>
+        <div class="filters" role="group" aria-label="Filter index">
+          <button data-filter="all" aria-pressed="true">All</button>
+          <button data-filter="project" aria-pressed="false">Projects</button>
+          <button data-filter="research" aria-pressed="false">Research</button>
+          <button data-filter="thoughts" aria-pressed="false">Thoughts</button>
+        </div>
+        <div class="ledger" id="ledger"></div>
+      </section>
+    </div>
+
+    <!-- ══ READER ══ -->
+    <div id="view-piece" hidden>
+      <button class="back" data-view="index">← Back to index</button>
+      <article class="piece" id="piece"></article>
+    </div>
+
+    <!-- ══ ABOUT ══ -->
+    <div id="view-about" hidden>
+      <section class="about">
+        <h2>About</h2>
+        <p>I'm a [what you do] based in [where you are]. I spend most of my time making software that's smaller than it probably should be, and the rest of it reading and writing.</p>
+        <p>I care about tools that respect the person using them, work that can be finished, and sentences that don't waste anyone's afternoon. If you're working on something in that neighbourhood, I'd like to hear about it.</p>
+        <ul class="contact">
+          <li><span>Email</span> <a href="mailto:you@example.com">you@example.com</a></li>
+          <li><span>Code</span> <a href="https://github.com/">github.com/yourname</a></li>
+          <li><span>Elsewhere</span> <a href="#">@yourname</a></li>
+        </ul>
+      </section>
+    </div>
+
+  </main>
+
+  <footer class="foot">
+    <span>Set in Newsreader &amp; DM Mono</span>
+    <span>Last updated July 2026</span>
+  </footer>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   PROGRESS — the working list on the landing page.
+
+   state: "building" — actively moving on it right now
+          "queued"   — decided to do, haven't started
+          "idea"     — something I want to write about someday
+
+   Add items in any order; the list sorts itself into those
+   three groups. note is optional.
+
+   You can also add, retone, and delete items directly on the
+   page. Those edits are live but not saved — this is a static
+   file with nowhere to write to. Use "Copy updated list" and
+   paste the result over this array to make them permanent.
+   ═══════════════════════════════════════════════════════════ */
+let PROGRESS = [
+  {state:"building", text:"Rewriting Lantern's sync layer so it stops losing edits on flaky wifi.",
+   note:"Started in May. Slower than I told myself it would be."},
+  {state:"building", text:"An archive page, so the index doesn't have to hold everything forever."},
+  {state:"queued",   text:"Full-text search across the whole site, running client-side."},
+  {state:"queued",   text:"Export every piece here as plain text — one folder, no formatting."},
+  {state:"idea",     text:"Why constraints feel generous in some tools and punitive in others."},
+  {state:"idea",     text:"The essay about my grandmother's seed tin that I keep abandoning."},
+  {state:"idea",     text:"Reading the same book every year, and what changes each time."}
+];
+
+/* ═══════════════════════════════════════════════════════════
+   EDIT HERE. This array is the whole site.
+
+   kind:    "project" | "research" | "writing" | "poem"
+            Projects and Research each get their own tab.
+            "writing" and "poem" both live under Thoughts —
+            the label and ink still tell them apart.
+
+   sort:    YYYYMMDD, newest first. Only used for ordering.
+   body:    writing/project/research → one string per paragraph.
+            poem → a single string. Line breaks and indentation
+            are preserved exactly as you type them.
+   links:   optional list of sources. Best on research entries.
+   link:    optional single link, e.g. a project's live URL.
+   ═══════════════════════════════════════════════════════════ */
+const ENTRIES = [
+  {
+    kind:"research", title:"Offline-first sync without a server", date:"Ongoing", sort:20260710,
+    sub:"Notes and reading as I work out how Lantern should merge edits.",
+    body:[
+      "This is a working page, not a finished argument. I'm trying to understand whether CRDTs are worth their weight for an app that will never have more than two devices per person.",
+      "So far the answer looks like no — a last-write-wins register with a vector clock covers every conflict I've actually hit, and it's about four hundred lines instead of a dependency. But I keep finding cases in the literature I hadn't thought of, so I'm holding the conclusion loosely.",
+      "Updated as I go. If you know this space and I've got something wrong, please tell me."
+    ],
+    links:[
+      {label:"Kleppmann — A Conflict-Free Replicated JSON Datatype", href:"#"},
+      {label:"Local-first software (Ink & Switch)", href:"#"},
+      {label:"My working notes, in the open", href:"#"}
+    ]
+  },
+  {
+    kind:"project", title:"Lantern", date:"2026", sort:20260601,
+    sub:"A bookmarking tool that only lets you keep fifty links.",
+    link:{label:"lantern.example.com", href:"#"},
+    body:[
+      "Lantern holds fifty bookmarks. When you save the fifty-first, it asks you which one to let go of. That's the entire product.",
+      "I built it after realising I had eleven thousand saved links and had revisited maybe forty of them. The constraint isn't a gimmick — it turns saving into a small act of judgement, which is the part that was missing.",
+      "Built with SQLite and a few hundred lines of Go. No accounts, no sync server, no analytics."
+    ]
+  },
+  {
+    kind:"poem", title:"Tuesday, unremarkable", date:"2026", sort:20260420,
+    sub:"On the ordinary hours nobody writes down.",
+    body:
+`The kettle clicks off and I don't get up.
+
+Outside, the man who walks the grey dog
+walks the grey dog. Same hour.
+Same slow arc around the puddle
+that has been there since March.
+
+I have decided this is a life:
+the noticing, and the not
+getting up.`
+  },
+  {
+    kind:"research", title:"What makes a constraint feel generous", date:"Ongoing", sort:20260315,
+    sub:"Collecting examples of limits that made a tool better, not smaller.",
+    body:[
+      "An open question I keep circling. Some limits feel like a gift — the sonnet, the 35mm frame, the single-page résumé. Others just feel like the product refusing to do its job.",
+      "My working theory is that a constraint feels generous when it removes a decision you were making badly anyway, and feels punitive when it removes one you wanted to make. That's testable, roughly, and I'm collecting cases below."
+    ],
+    links:[
+      {label:"Perec — Species of Spaces", href:"#"},
+      {label:"Oulipo, potential literature workshop archives", href:"#"}
+    ]
+  },
+  {
+    kind:"writing", title:"On keeping a small internet", date:"2026", sort:20260310,
+    sub:"Why I stopped trying to be findable.",
+    body:[
+      "For about eight years I optimised. Titles that would rank, posts timed for the feed, a bio tuned to whoever I imagined was reading. It worked, a little, and I hated all of it.",
+      "The thing nobody tells you about being findable is that it changes what you're willing to say. You start writing for the stranger who might be annoyed rather than the friend who might be interested, and the writing goes grey.",
+      "So this site has no comments, no newsletter, no share buttons, and no way to know how many people have read anything. If you're here, you probably know me, or you followed one link from someone who does. That's the right size."
+    ]
+  },
+  {
+    kind:"project", title:"Margin", date:"2025", sort:20251120,
+    sub:"Annotations for anything you read in a browser.",
+    link:{label:"github.com/yourname/margin", href:"#"},
+    body:[
+      "A browser extension that lets you write in the margins of any page and keeps those notes in a plain-text file you own.",
+      "The hard part wasn't the highlighting — it was making annotations survive when the page underneath changes. Margin anchors to text fingerprints rather than DOM positions, so a note usually finds its way home even after a redesign.",
+      "Roughly nine hundred people use it. I know because they email me when it breaks."
+    ]
+  },
+  {
+    kind:"poem", title:"Field notes for a hard winter", date:"2025", sort:20250915,
+    sub:"Three fragments.",
+    body:
+`i.
+The frost gets in through the smallest gap.
+So does the light. I keep the gap.
+
+ii.
+My grandmother kept seeds in a tin
+labelled in a hand I can no longer read.
+I plant them anyway. Something comes up.
+
+iii.
+Not every season is for growing.
+Some are just for staying.`
+  },
+  {
+    kind:"writing", title:"What I learned shipping something nobody used", date:"2025", sort:20250402,
+    sub:"Two years, four users, no regrets worth mentioning.",
+    body:[
+      "I spent two years on a scheduling tool. At its peak it had four active users, and two of them were me on different accounts.",
+      "The honest lesson isn't 'talk to users earlier', though that's true. It's that I never actually wanted the thing to exist — I wanted to have built it. Those are different appetites and only one of them survives month fourteen.",
+      "I keep the repo public and unarchived. It's a decent piece of engineering attached to a bad idea, which is a distinction worth being able to see in your own work."
+    ]
+  }
+];
+
+/* ─── wiring ────────────────────────────────────────────── */
+const LABELS = {project:"Project", research:"Research", writing:"Writing", poem:"Poem"};
+const GROUPS = {all:null, project:["project"], research:["research"], thoughts:["writing","poem"]};
+
+const ledger = document.getElementById("ledger");
+const piece  = document.getElementById("piece");
+const views  = {
+  index: document.getElementById("view-index"),
+  piece: document.getElementById("view-piece"),
+  about: document.getElementById("view-about")
+};
+let filter = "all";
+
+const STATES = {
+  building:{label:"Building", order:0},
+  queued:  {label:"Queued",   order:1},
+  idea:    {label:"Idea",     order:2}
+};
+const TONES = ["building","queued","idea"];
+
+let uid = 0;
+PROGRESS.forEach(p => p.id = ++uid);
+let dirty = false;
+
+const esc = s => String(s).replace(/[&<>"]/g, c =>
+  ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+const byState = (a,b) => STATES[a.state].order - STATES[b.state].order;
+
+function renderProgress(){
+  document.getElementById("progress-list").innerHTML = PROGRESS
+    .slice().sort(byState)
+    .map(p => `
+      <li>
+        <button class="dot ${p.state}" data-retone="${p.id}"
+                title="Change ink tone" aria-label="Change tone of: ${esc(p.text)}"></button>
+        <span class="progress-state ${p.state}">${STATES[p.state].label}</span>
+        <span class="progress-text">${esc(p.text)}${p.note ? `<span class="progress-note">${esc(p.note)}</span>` : ""}</span>
+        <button class="row-x" data-remove="${p.id}"
+                title="Remove" aria-label="Remove: ${esc(p.text)}">✕</button>
+      </li>`).join("");
+  document.getElementById("export").hidden = !dirty;
+}
+
+/* ─── composer ─── */
+const composer = document.getElementById("composer");
+const input    = document.getElementById("composer-input");
+let newTone = "building";
+
+function openComposer(open){
+  composer.hidden = !open;
+  document.getElementById("progress-add").hidden = open;
+  if(open){ input.value = ""; input.focus(); }
+}
+
+function addItem(){
+  const text = input.value.trim();
+  if(!text){ input.focus(); return; }
+  PROGRESS.push({state:newTone, text, id:++uid});
+  dirty = true;
+  openComposer(false);
+  renderProgress();
+  document.getElementById("progress-add").focus();
+}
+
+document.getElementById("progress-add").addEventListener("click", () => openComposer(true));
+document.getElementById("composer-cancel").addEventListener("click", () => {
+  openComposer(false);
+  document.getElementById("progress-add").focus();
+});
+document.getElementById("composer-save").addEventListener("click", addItem);
+
+input.addEventListener("keydown", e => {
+  if(e.key === "Enter"){ e.preventDefault(); addItem(); }
+  if(e.key === "Escape"){ openComposer(false); document.getElementById("progress-add").focus(); }
+});
+
+document.querySelectorAll(".tone").forEach(btn => {
+  btn.addEventListener("click", () => {
+    newTone = btn.dataset.tone;
+    document.querySelectorAll(".tone").forEach(b =>
+      b.setAttribute("aria-pressed", String(b === btn)));
+    input.focus();
+  });
+});
+
+/* ─── row actions: click the dot to retone, ✕ to remove ─── */
+document.getElementById("progress-list").addEventListener("click", ev => {
+  const retone = ev.target.closest("[data-retone]");
+  if(retone){
+    const item = PROGRESS.find(p => p.id === Number(retone.dataset.retone));
+    item.state = TONES[(TONES.indexOf(item.state) + 1) % TONES.length];
+    dirty = true;
+    return renderProgress();
+  }
+  const remove = ev.target.closest("[data-remove]");
+  if(remove){
+    PROGRESS = PROGRESS.filter(p => p.id !== Number(remove.dataset.remove));
+    dirty = true;
+    renderProgress();
+  }
+});
+
+/* ─── export: rebuild the array as source you can paste back ─── */
+function listSource(){
+  const q = s => '"' + String(s).replace(/\\/g,"\\\\").replace(/"/g,'\\"') + '"';
+  const rows = PROGRESS.slice().sort(byState).map(p =>
+    `  {state:${q(p.state)}, text:${q(p.text)}${p.note ? `,\n   note:${q(p.note)}` : ""}}`
+  ).join(",\n");
+  return `let PROGRESS = [\n${rows}\n];`;
+}
+
+document.getElementById("copy-list").addEventListener("click", async ev => {
+  const text = listSource();
+  try{
+    await navigator.clipboard.writeText(text);
+  }catch{
+    const ta = document.createElement("textarea");
+    ta.value = text; document.body.appendChild(ta);
+    ta.select(); document.execCommand("copy"); ta.remove();
+  }
+  ev.target.textContent = "Copied — paste it over the PROGRESS array";
+  setTimeout(() => { ev.target.textContent = "Copy updated list →"; }, 3000);
+});
+
+function renderLedger(){
+  const allow = GROUPS[filter];
+  ledger.innerHTML = ENTRIES
+    .filter(e => !allow || allow.includes(e.kind))
+    .sort((a,b) => b.sort - a.sort)
+    .map(e => `
+      <button class="row" data-kind="${e.kind}" data-id="${ENTRIES.indexOf(e)}">
+        <span class="row-kind">${LABELS[e.kind]}</span>
+        <span class="row-title">${e.title}<span class="row-sub">${e.sub || ""}</span></span>
+        <span class="row-date">${e.date}</span>
+      </button>`).join("");
+}
+
+function show(view){
+  Object.entries(views).forEach(([k,el]) => el.hidden = k !== view);
+  document.querySelectorAll(".nav button").forEach(b =>
+    b.setAttribute("aria-current", String(b.dataset.view === view)));
+  window.scrollTo(0,0);
+}
+
+function openPiece(id){
+  const e = ENTRIES[id];
+  const isPoem = e.kind === "poem";
+  piece.className = "piece" + (isPoem ? " poem" : "");
+
+  let body;
+  if(isPoem){
+    body = `<div class="piece-body">${e.body}</div>`;
+  } else {
+    const paras = e.body.map(p => `<p>${p}</p>`).join("");
+    const one   = e.link ? `<a class="piece-link" href="${e.link.href}">${e.link.label} →</a>` : "";
+    const many  = e.links ? `<ul class="sources"><li class="sources-label">Sources &amp; links</li>` +
+                  e.links.map(l => `<li><a href="${l.href}">${l.label}</a></li>`).join("") + `</ul>` : "";
+    body = `<div class="piece-body">${paras}${one}</div>${many}`;
+  }
+  piece.innerHTML = `<p class="piece-meta">${LABELS[e.kind]} — ${e.date}</p><h2>${e.title}</h2>${body}`;
+  show("piece");
+}
+
+document.addEventListener("click", ev => {
+  const row = ev.target.closest(".row");
+  if(row) return openPiece(Number(row.dataset.id));
+
+  const f = ev.target.closest(".filters button");
+  if(f){
+    filter = f.dataset.filter;
+    document.querySelectorAll(".filters button").forEach(b =>
+      b.setAttribute("aria-pressed", String(b === f)));
+    return renderLedger();
+  }
+
+  const nav = ev.target.closest("[data-view]");
+  if(nav) return show(nav.dataset.view);
+});
+
+document.getElementById("wordmark").addEventListener("click", () => show("index"));
+
+renderProgress();
+renderLedger();
+</script>
+</body>
+</html>
