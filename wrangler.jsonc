@@ -1,7 +1,7 @@
 {
   // Your site's project name. Becomes <name>.workers.dev
   // Lowercase letters, numbers, and hyphens only.
-  "name": "personal-site",
+  "name": "projectsnprogress",
 
   // Pins Cloudflare's runtime behaviour to this date.
   // Leave it alone unless you have a reason to bump it.
