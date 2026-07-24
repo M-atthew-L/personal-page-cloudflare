@@ -15,19 +15,56 @@
    handles labels, dates, and structure only.
    ───────────────────────────────────────────── */
 :root{
-  --paper:#e7e5ec;
-  --ink:#191921;
-  --blue:#2b2be0;   /* projects, research, writing */
-  --pink:#ff5470;   /* poems only */
-  --mute:#82818f;
-  --rule:rgba(25,25,33,.13);
-  --rule-hard:rgba(25,25,33,.26);
+  color-scheme:light dark;
+
+  --paper:#eceaf1;
+  --ink:#15151b;
+  --blue:#2626c4;   /* projects, research, writing */
+  --pink:#c9325b;   /* poems only */
+  --mute:#5d5c6a;
+  --body:#33333f;
+  --rule:rgba(21,21,27,.16);
+  --rule-hard:rgba(21,21,27,.34);
+
+  --blend:multiply;       /* riso overprint — only works on light stock */
+  --grain:.15;
+  --grain-blend:multiply;
 
   --f-text:"Newsreader",Georgia,"Times New Roman",serif;
   --f-util:"DM Mono",ui-monospace,"SF Mono",Menlo,monospace;
 
   --measure:62ch;
   --pad:clamp(1.25rem,5vw,4rem);
+}
+
+/* dark stock. Inks lighten rather than darken, so the blend flips. */
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#15151c;
+    --ink:#e9e7f1;
+    --blue:#a6a2ff;
+    --pink:#ff8fa6;
+    --mute:#9b98a9;
+    --body:#c8c6d4;
+    --rule:rgba(233,231,241,.15);
+    --rule-hard:rgba(233,231,241,.3);
+    --blend:normal;
+    --grain:.045;
+    --grain-blend:screen;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#15151c;
+  --ink:#e9e7f1;
+  --blue:#a6a2ff;
+  --pink:#ff8fa6;
+  --mute:#9b98a9;
+  --body:#c8c6d4;
+  --rule:rgba(233,231,241,.15);
+  --rule-hard:rgba(233,231,241,.3);
+  --blend:normal;
+  --grain:.045;
+  --grain-blend:screen;
 }
 
 *,*::before,*::after{box-sizing:border-box}
@@ -45,7 +82,7 @@ body{
 /* paper grain, dialled back */
 body::before{
   content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
-  opacity:.26;mix-blend-mode:multiply;
+  opacity:var(--grain);mix-blend-mode:var(--grain-blend);
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='.4'/%3E%3C/svg%3E");
 }
 
@@ -72,11 +109,11 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--blue);outline-offse
 .wordmark:hover{color:var(--blue)}
 .regmark{
   position:relative;width:.6rem;height:.6rem;flex:0 0 auto;
-  background:var(--blue);mix-blend-mode:multiply;border-radius:50%;
+  background:var(--blue);mix-blend-mode:var(--blend);border-radius:50%;
 }
 .regmark::after{
   content:"";position:absolute;inset:0;border-radius:50%;
-  background:var(--pink);mix-blend-mode:multiply;
+  background:var(--pink);mix-blend-mode:var(--blend);
   transform:translate(5px,3px);
   animation:register 1.1s cubic-bezier(.16,1,.3,1) .2s forwards;
 }
@@ -101,8 +138,8 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--blue);outline-offse
   line-height:1.12;letter-spacing:-.02em;
   margin:0 0 1.75rem;max-width:19ch;
 }
-.statement h1 em{font-style:italic;color:var(--blue);mix-blend-mode:multiply}
-.statement p{margin:0;max-width:50ch;color:#3a3a46}
+.statement h1 em{font-style:italic;color:var(--blue);mix-blend-mode:var(--blend)}
+.statement p{margin:0;max-width:50ch;color:var(--body)}
 
 /* ─────────────────────────────────────────────
    PROGRESS — ink weight encodes commitment:
@@ -118,14 +155,14 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--blue);outline-offse
 .progress-list li:last-child{border-bottom:0}
 .dot{
   width:.55rem;height:.55rem;border-radius:50%;
-  transform:translateY(-.08em);mix-blend-mode:multiply;
+  transform:translateY(-.08em);mix-blend-mode:var(--blend);
 }
 .dot.building{background:var(--blue)}
 .dot.queued{border:1.5px solid var(--blue)}
 .dot.idea{border:1.5px solid var(--mute)}
 .progress-state{
   font-family:var(--f-util);font-size:.66rem;letter-spacing:.12em;
-  text-transform:uppercase;color:var(--blue);mix-blend-mode:multiply;
+  text-transform:uppercase;color:var(--blue);mix-blend-mode:var(--blend);
 }
 .progress-state.idea{color:var(--mute)}
 .progress-text{max-width:54ch}
@@ -179,6 +216,41 @@ button.dot:hover{opacity:.6}
 .linkbtn.primary{color:var(--blue)}
 .export{margin-top:1.4rem}
 .export p{margin:0 0 .5rem;font-size:.9375rem;color:var(--mute);max-width:52ch}
+.field{margin-top:1.2rem}
+.field label{
+  display:block;font-family:var(--f-util);font-size:.64rem;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--mute);margin-bottom:.4rem;
+}
+.field input,.field textarea{
+  width:100%;background:none;border:0;border-bottom:1px solid var(--rule);
+  font-family:var(--f-text);font-size:1.0625rem;color:var(--ink);
+  padding:.4rem 0;resize:vertical;
+}
+.field textarea{min-height:9rem;line-height:1.62}
+.field input:focus,.field textarea:focus{outline:0;border-bottom-color:var(--blue)}
+.field .hint{font-size:.875rem;color:var(--mute);margin:.4rem 0 0}
+.field-row{display:flex;gap:1.75rem;flex-wrap:wrap}
+.field-row .field{flex:1 1 12rem}
+.row-edit{right:2.4rem;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase}
+.row.editing .row-main{padding-right:5rem}
+
+.trash{margin-top:2.75rem;border-top:1px solid var(--rule-hard);padding-top:1.5rem}
+.trash .plate-label{display:flex;gap:1.5rem;align-items:center;flex-wrap:wrap}
+.trash-list{list-style:none;margin:0;padding:0}
+.trash-list li{
+  display:grid;grid-template-columns:5.5rem 1fr auto;gap:1.25rem;
+  align-items:baseline;padding:.75rem 0;border-bottom:1px solid var(--rule);
+}
+.trash-list li:last-child{border-bottom:0}
+.trash-actions{display:flex;gap:1.25rem}
+.trash-when{font-family:var(--f-util);font-size:.66rem;color:var(--mute)}
+
+.theme-toggle{
+  background:none;border:0;padding:.2rem 0;cursor:pointer;font:inherit;
+  color:var(--mute);border-bottom:1px solid transparent;
+}
+.theme-toggle:hover{color:var(--ink)}
+
 .unlock{display:flex;flex-wrap:wrap;gap:1rem;align-items:center;margin-top:1.3rem}
 .unlock input{
   background:none;border:0;border-bottom:1px solid var(--rule-hard);width:15rem;
@@ -207,18 +279,41 @@ button.dot:hover{opacity:.6}
 .filters button:hover{color:var(--ink)}
 .filters button[aria-pressed="true"]{color:var(--ink);border-bottom-color:var(--ink)}
 
-.ledger{border-top:1px solid var(--rule-hard);margin-top:1.75rem}
-.row{
+.ledger-wrap{position:relative;margin-top:1.75rem}
+/* the fade hints there's more below the fold */
+.ledger-wrap::after{
+  content:"";position:absolute;left:0;right:0;bottom:0;height:3rem;
+  pointer-events:none;background:linear-gradient(transparent,var(--paper));
+}
+.ledger{
+  border-top:1px solid var(--rule-hard);
+  /* Set --ledger-height:none in :root to let the page scroll instead. */
+  max-height:var(--ledger-height,34rem);
+  overflow-y:auto;overscroll-behavior:contain;
+  scrollbar-width:thin;scrollbar-color:var(--rule-hard) transparent;
+  padding-bottom:2.5rem;
+}
+.ledger::-webkit-scrollbar{width:11px}
+.ledger::-webkit-scrollbar-track{background:transparent}
+.ledger::-webkit-scrollbar-thumb{
+  background:var(--rule-hard);border:3px solid var(--paper);border-radius:10px;
+}
+.ledger::-webkit-scrollbar-thumb:hover{background:var(--mute)}
+
+.row{position:relative;border-bottom:1px solid var(--rule);transition:border-color .2s}
+.row:hover{border-bottom-color:var(--rule-hard)}
+.row-main{
   display:grid;grid-template-columns:5.5rem 1fr auto;gap:1.25rem;
   align-items:baseline;width:100%;background:none;border:0;
-  border-bottom:1px solid var(--rule);padding:1.35rem .1rem;
-  cursor:pointer;text-align:left;font:inherit;color:var(--ink);
-  transition:padding-left .2s ease,border-color .2s;
+  padding:1.35rem .1rem;cursor:pointer;text-align:left;font:inherit;
+  color:var(--ink);transition:padding-left .2s ease;
 }
-.row:hover,.row:focus-visible{padding-left:.7rem;border-bottom-color:var(--rule-hard)}
+.row-main:hover,.row-main:focus-visible{padding-left:.7rem}
+.row.editing .row-main{padding-right:2rem}
+.row .row-x{top:1.35rem}
 .row-kind{
   font-family:var(--f-util);font-size:.66rem;letter-spacing:.12em;
-  text-transform:uppercase;color:var(--blue);mix-blend-mode:multiply;
+  text-transform:uppercase;color:var(--blue);mix-blend-mode:var(--blend);
 }
 .row[data-kind="poem"] .row-kind{color:var(--pink)}
 .row-title{font-size:1.125rem;line-height:1.35}
@@ -251,12 +346,12 @@ button.dot:hover{opacity:.6}
 
 /* poems — own ink, own measure */
 .piece.poem{max-width:44ch}
-.piece.poem .piece-meta{color:var(--pink);mix-blend-mode:multiply}
+.piece.poem .piece-meta{color:var(--pink);mix-blend-mode:var(--blend)}
 .piece.poem h2{font-weight:300;font-style:italic}
 .piece.poem .piece-body{white-space:pre-wrap;font-weight:300;font-size:1.25rem;line-height:1.85}
 .piece.poem::after{
   content:"";display:block;width:2rem;height:.3rem;margin-top:2.75rem;
-  background:var(--pink);mix-blend-mode:multiply;
+  background:var(--pink);mix-blend-mode:var(--blend);
 }
 
 /* research — sources sit under the writing */
@@ -294,7 +389,8 @@ button.dot:hover{opacity:.6}
 [hidden]{display:none !important}
 
 @media (max-width:36rem){
-  .row{grid-template-columns:1fr auto;gap:.35rem 1rem}
+  .trash-list li{grid-template-columns:1fr;gap:.3rem}
+  .row-main{grid-template-columns:1fr auto;gap:.35rem 1rem}
   .row-kind{grid-column:1/-1}
   .progress-list li{grid-template-columns:.55rem 1fr;gap:.35rem .9rem}
   .progress-state{grid-column:2}
@@ -315,11 +411,12 @@ button.dot:hover{opacity:.6}
 
   <header class="masthead">
     <button class="wordmark" id="wordmark" aria-label="Home">
-      <span class="regmark" aria-hidden="true"></span>Matthew Lee
+      <span class="regmark" aria-hidden="true"></span>Your Name
     </button>
     <nav class="nav" aria-label="Sections">
       <button data-view="index" aria-current="true">Index</button>
       <button data-view="about">About</button>
+      <button class="theme-toggle" id="theme" aria-label="Switch colour scheme">Dark</button>
     </nav>
   </header>
 
@@ -372,7 +469,68 @@ button.dot:hover{opacity:.6}
           <button data-filter="research" aria-pressed="false">Research</button>
           <button data-filter="thoughts" aria-pressed="false">Thoughts</button>
         </div>
-        <div class="ledger" id="ledger"></div>
+        <div class="ledger-wrap">
+          <div class="ledger" id="ledger"></div>
+        </div>
+
+        <button class="progress-add" id="entry-add" hidden>
+          <span class="plus" aria-hidden="true">+</span> Add to index
+        </button>
+
+        <div class="composer" id="entry-form" hidden>
+          <div class="tones" role="group" aria-label="Kind">
+            <button class="tone" data-kind="project" aria-pressed="true"><span class="dot building"></span>Project</button>
+            <button class="tone" data-kind="research" aria-pressed="false"><span class="dot building"></span>Research</button>
+            <button class="tone" data-kind="writing" aria-pressed="false"><span class="dot building"></span>Writing</button>
+            <button class="tone" data-kind="poem" aria-pressed="false"><span class="dot idea"></span>Poem</button>
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <label for="e-title">Title</label>
+              <input id="e-title" type="text" autocomplete="off">
+            </div>
+            <div class="field">
+              <label for="e-date">Date</label>
+              <input id="e-date" type="text" autocomplete="off" placeholder="2026, or Ongoing">
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="e-sub">One-line description</label>
+            <input id="e-sub" type="text" autocomplete="off">
+            <p class="hint">Shown under the title in the index. Optional.</p>
+          </div>
+
+          <div class="field">
+            <label for="e-body">Body</label>
+            <textarea id="e-body"></textarea>
+            <p class="hint" id="e-body-hint">Leave a blank line between paragraphs.</p>
+          </div>
+
+          <div class="field">
+            <label for="e-links">Links</label>
+            <textarea id="e-links" style="min-height:5rem"></textarea>
+            <p class="hint">One per line, as <code>Label | https://example.com</code>. A single link shows inline; several become a Sources list.</p>
+          </div>
+
+          <div class="tones">
+            <span class="composer-actions">
+              <button class="linkbtn" id="entry-cancel">Cancel</button>
+              <button class="linkbtn primary" id="entry-save">Add to index</button>
+            </span>
+          </div>
+        </div>
+
+        <p class="progress-status" id="entry-status" role="status" aria-live="polite"></p>
+
+        <section class="trash" id="trash" hidden>
+          <p class="plate-label">
+            Recently deleted
+            <button class="linkbtn" id="trash-empty">Empty permanently</button>
+          </p>
+          <ul class="trash-list" id="trash-list"></ul>
+        </section>
       </section>
     </div>
 
@@ -446,7 +604,7 @@ let PROGRESS = [
    links:   optional list of sources. Best on research entries.
    link:    optional single link, e.g. a project's live URL.
    ═══════════════════════════════════════════════════════════ */
-const ENTRIES = [
+let ENTRIES = [
   {
     kind:"research", title:"Offline-first sync without a server", date:"Ongoing", sort:20260710,
     sub:"Notes and reading as I work out how Lantern should merge edits.",
@@ -628,6 +786,7 @@ async function saveProgress(){
     if(r.status === 401){
       unlocked = false; editKey = null;
       renderProgress();
+      renderLedger();
       $("unlock").hidden = false;
       return say("Key rejected. Unlock again.");
     }
@@ -657,6 +816,8 @@ async function tryUnlock(){
       $("edit-key").value = "";
       $("unlock").hidden = true;
       renderProgress();
+      renderLedger();
+      loadTrash();
       return say("Editing on");
     }
     const {error} = await r.json().catch(() => ({}));
@@ -727,11 +888,16 @@ $("progress-list").addEventListener("click", ev => {
 
   const remove = ev.target.closest("[data-remove]");
   if(remove){
+    const item = PROGRESS.find(p => p.id === Number(remove.dataset.remove));
+    if(item) toTrash("progress", item);
     PROGRESS = PROGRESS.filter(p => p.id !== Number(remove.dataset.remove));
     renderProgress();
     saveProgress();
   }
 });
+
+let eid = 0;
+ENTRIES.forEach(e => e.eid = ++eid);
 
 function renderLedger(){
   const allow = GROUPS[filter];
@@ -739,11 +905,20 @@ function renderLedger(){
     .filter(e => !allow || allow.includes(e.kind))
     .sort((a,b) => b.sort - a.sort)
     .map(e => `
-      <button class="row" data-kind="${e.kind}" data-id="${ENTRIES.indexOf(e)}">
-        <span class="row-kind">${LABELS[e.kind]}</span>
-        <span class="row-title">${e.title}<span class="row-sub">${e.sub || ""}</span></span>
-        <span class="row-date">${e.date}</span>
-      </button>`).join("");
+      <div class="row ${unlocked ? "editing" : ""}" data-kind="${e.kind}">
+        <button class="row-main" data-open="${e.eid}">
+          <span class="row-kind">${LABELS[e.kind]}</span>
+          <span class="row-title">${esc(e.title)}<span class="row-sub">${esc(e.sub || "")}</span></span>
+          <span class="row-date">${esc(e.date)}</span>
+        </button>
+        ${unlocked
+          ? `<button class="row-x row-edit" data-edit-entry="${e.eid}"
+                     title="Edit" aria-label="Edit: ${esc(e.title)}">Edit</button>
+             <button class="row-x" data-remove-entry="${e.eid}"
+                     title="Move to Recently deleted" aria-label="Delete: ${esc(e.title)}">\u2715</button>`
+          : ""}
+      </div>`).join("");
+  $("entry-add").hidden = !unlocked || !$("entry-form").hidden;
 }
 
 function show(view){
@@ -754,27 +929,191 @@ function show(view){
 }
 
 function openPiece(id){
-  const e = ENTRIES[id];
+  const e = ENTRIES.find(x => x.eid === Number(id));
+  if(!e) return;
   const isPoem = e.kind === "poem";
   piece.className = "piece" + (isPoem ? " poem" : "");
 
   let body;
   if(isPoem){
-    body = `<div class="piece-body">${e.body}</div>`;
+    body = `<div class="piece-body">${esc(e.body)}</div>`;
   } else {
-    const paras = e.body.map(p => `<p>${p}</p>`).join("");
-    const one   = e.link ? `<a class="piece-link" href="${e.link.href}">${e.link.label} →</a>` : "";
-    const many  = e.links ? `<ul class="sources"><li class="sources-label">Sources &amp; links</li>` +
-                  e.links.map(l => `<li><a href="${l.href}">${l.label}</a></li>`).join("") + `</ul>` : "";
+    const paras = (e.body || []).map(p => `<p>${esc(p)}</p>`).join("");
+    const one   = e.link ? `<a class="piece-link" href="${esc(e.link.href)}">${esc(e.link.label)} \u2192</a>` : "";
+    const many  = (e.links && e.links.length)
+      ? `<ul class="sources"><li class="sources-label">Sources &amp; links</li>` +
+        e.links.map(l => `<li><a href="${esc(l.href)}">${esc(l.label)}</a></li>`).join("") + `</ul>`
+      : "";
     body = `<div class="piece-body">${paras}${one}</div>${many}`;
   }
-  piece.innerHTML = `<p class="piece-meta">${LABELS[e.kind]} — ${e.date}</p><h2>${e.title}</h2>${body}`;
+  piece.innerHTML = `<p class="piece-meta">${LABELS[e.kind]} \u2014 ${esc(e.date)}</p><h2>${esc(e.title)}</h2>${body}`;
   show("piece");
 }
 
+/* ─── index: load from and save to the server ─── */
+async function loadEntries(){
+  try{
+    const r = await fetch("/api/entries");
+    if(!r.ok) return;
+    const list = await r.json();
+    if(Array.isArray(list) && list.length){
+      ENTRIES = list.map(e => ({...e, eid: ++eid}));
+      renderLedger();
+    }
+  }catch{ /* offline — keep the built-in list */ }
+}
+
+const entryPayload = () => ENTRIES
+  .slice().sort((a,b) => b.sort - a.sort)
+  .map(({eid, ...rest}) => rest);
+
+async function saveEntries(){
+  if(!unlocked) return;
+  $("entry-status").textContent = "Saving\u2026";
+  try{
+    const r = await fetch("/api/entries", {
+      method:"PUT",
+      headers:{"Content-Type":"application/json","X-Edit-Key":editKey},
+      body:JSON.stringify(entryPayload())
+    });
+    if(!r.ok){
+      const {error} = await r.json().catch(() => ({}));
+      $("entry-status").textContent = error || "Save failed.";
+      return;
+    }
+    $("entry-status").textContent = "Saved";
+  }catch{
+    $("entry-status").textContent = "Offline \u2014 that change wasn't saved.";
+  }
+}
+
+/* ─── index composer ─── */
+let newKind = "project";
+let editingId = null;
+
+function openEntryForm(open){
+  $("entry-form").hidden = !open;
+  $("entry-add").hidden = open || !unlocked;
+  if(open) $("e-title").focus();
+}
+
+document.querySelectorAll("#entry-form [data-kind]").forEach(btn => {
+  btn.addEventListener("click", () => {
+    newKind = btn.dataset.kind;
+    document.querySelectorAll("#entry-form [data-kind]").forEach(b =>
+      b.setAttribute("aria-pressed", String(b === btn)));
+    $("e-body-hint").textContent = newKind === "poem"
+      ? "Line breaks and spacing are kept exactly as you type them."
+      : "Leave a blank line between paragraphs.";
+  });
+});
+
+function parseLinks(raw){
+  return raw.split("\n").map(line => {
+    const [label, href] = line.split("|").map(s => (s || "").trim());
+    return (label && href) ? {label, href} : null;
+  }).filter(Boolean);
+}
+
+function resetForm(){
+  editingId = null;
+  ["e-title","e-date","e-sub","e-body","e-links"].forEach(id => $(id).value = "");
+  $("entry-save").textContent = "Add to index";
+}
+
+/* one link renders inline; several become a Sources list */
+function attachLinks(entry, raw){
+  const parsed = parseLinks(raw);
+  delete entry.link; delete entry.links;
+  if(parsed.length === 1)      entry.link  = parsed[0];
+  else if(parsed.length > 1)   entry.links = parsed;
+}
+
+function editEntry(id){
+  const e = ENTRIES.find(x => x.eid === Number(id));
+  if(!e) return;
+  editingId = e.eid;
+  newKind = e.kind;
+
+  document.querySelectorAll("#entry-form [data-kind]").forEach(b =>
+    b.setAttribute("aria-pressed", String(b.dataset.kind === e.kind)));
+  $("e-body-hint").textContent = e.kind === "poem"
+    ? "Line breaks and spacing are kept exactly as you type them."
+    : "Leave a blank line between paragraphs.";
+
+  $("e-title").value = e.title || "";
+  $("e-date").value  = e.date || "";
+  $("e-sub").value   = e.sub || "";
+  $("e-body").value  = e.kind === "poem" ? (e.body || "") : (e.body || []).join("\n\n");
+
+  const lines = [];
+  if(e.link) lines.push(`${e.link.label} | ${e.link.href}`);
+  (e.links || []).forEach(l => lines.push(`${l.label} | ${l.href}`));
+  $("e-links").value = lines.join("\n");
+
+  $("entry-save").textContent = "Save changes";
+  openEntryForm(true);
+  $("e-title").focus();
+}
+
+function submitEntry(){
+  const title = $("e-title").value.trim();
+  const raw   = $("e-body").value;
+  if(!title)      return $("e-title").focus();
+  if(!raw.trim()) return $("e-body").focus();
+
+  const body = newKind === "poem"
+    ? raw
+    : raw.split(/\n\s*\n/).map(s => s.trim()).filter(Boolean);
+
+  const existing = editingId && ENTRIES.find(x => x.eid === editingId);
+
+  if(existing){
+    existing.kind  = newKind;
+    existing.title = title;
+    existing.date  = $("e-date").value.trim() || existing.date;
+    existing.sub   = $("e-sub").value.trim();
+    existing.body  = body;
+    attachLinks(existing, $("e-links").value);
+  } else {
+    const entry = {
+      kind : newKind,
+      title,
+      date : $("e-date").value.trim() || String(new Date().getFullYear()),
+      sub  : $("e-sub").value.trim(),
+      sort : Number(new Date().toISOString().slice(0,10).replace(/-/g,"")),
+      body,
+      eid  : ++eid
+    };
+    attachLinks(entry, $("e-links").value);
+    ENTRIES.push(entry);
+  }
+
+  resetForm();
+  openEntryForm(false);
+  renderLedger();
+  saveEntries();
+}
+
+$("entry-add").addEventListener("click", () => openEntryForm(true));
+$("entry-cancel").addEventListener("click", () => { resetForm(); openEntryForm(false); });
+$("entry-save").addEventListener("click", submitEntry);
+
 document.addEventListener("click", ev => {
-  const row = ev.target.closest(".row");
-  if(row) return openPiece(Number(row.dataset.id));
+  const kill = ev.target.closest("[data-remove-entry]");
+  if(kill && unlocked){
+    const e = ENTRIES.find(x => x.eid === Number(kill.dataset.removeEntry));
+    if(e) toTrash("entry", e);
+    ENTRIES = ENTRIES.filter(x => x.eid !== Number(kill.dataset.removeEntry));
+    renderLedger();
+    return saveEntries();
+  }
+
+  const pencil = ev.target.closest("[data-edit-entry]");
+  if(pencil && unlocked) return editEntry(pencil.dataset.editEntry);
+
+  const open = ev.target.closest("[data-open]");
+  if(open) return openPiece(open.dataset.open);
 
   const f = ev.target.closest(".filters button");
   if(f){
@@ -790,9 +1129,120 @@ document.addEventListener("click", ev => {
 
 document.getElementById("wordmark").addEventListener("click", () => show("index"));
 
+/* ═══════════════════════════════════════════════════════════
+   RECENTLY DELETED
+   Nothing is destroyed by the ✕ — it moves here, and only
+   an explicit confirmation empties it for good. Visible in
+   edit mode only, and the API requires the key to read it.
+   ═══════════════════════════════════════════════════════════ */
+let TRASH = [];
+
+const since = ts => {
+  if(!ts) return "";
+  const days = Math.floor((Date.now() - ts) / 86400000);
+  return days < 1 ? "today" : days === 1 ? "yesterday" : `${days} days ago`;
+};
+
+function renderTrash(){
+  const box = $("trash");
+  box.hidden = !unlocked || !TRASH.length;
+  if(box.hidden) return;
+
+  $("trash-list").innerHTML = TRASH.map((t,i) => {
+    const name = t.type === "entry" ? t.item.title : t.item.text;
+    return `
+      <li>
+        <span class="progress-state">${t.type === "entry" ? "Index" : "Progress"}</span>
+        <span class="progress-text">${esc(name)}<span class="trash-when"> ${since(t.at)}</span></span>
+        <span class="trash-actions">
+          <button class="linkbtn primary" data-restore="${i}">Restore</button>
+          <button class="linkbtn" data-purge="${i}">Delete forever</button>
+        </span>
+      </li>`;
+  }).join("");
+}
+
+async function loadTrash(){
+  if(!unlocked) return;
+  try{
+    const r = await fetch("/api/trash", {headers:{"X-Edit-Key":editKey}});
+    if(!r.ok) return;
+    const list = await r.json();
+    if(Array.isArray(list)){ TRASH = list; renderTrash(); }
+  }catch{}
+}
+
+async function saveTrash(){
+  if(!unlocked) return;
+  try{
+    await fetch("/api/trash", {
+      method:"PUT",
+      headers:{"Content-Type":"application/json","X-Edit-Key":editKey},
+      body:JSON.stringify(TRASH)
+    });
+  }catch{}
+}
+
+function toTrash(type, item){
+  const {eid, id, ...clean} = item;
+  TRASH.unshift({type, item:clean, at:Date.now()});
+  TRASH = TRASH.slice(0, 50);
+  renderTrash();
+  saveTrash();
+}
+
+document.addEventListener("click", ev => {
+  if(!unlocked) return;
+
+  const restore = ev.target.closest("[data-restore]");
+  if(restore){
+    const [t] = TRASH.splice(Number(restore.dataset.restore), 1);
+    if(t.type === "entry"){
+      ENTRIES.push({...t.item, eid: ++eid});
+      renderLedger(); saveEntries();
+    } else {
+      PROGRESS.push({...t.item, id: ++uid});
+      renderProgress(); saveProgress();
+    }
+    renderTrash(); saveTrash();
+    return;
+  }
+
+  const purge = ev.target.closest("[data-purge]");
+  if(purge){
+    const t = TRASH[Number(purge.dataset.purge)];
+    const name = t.type === "entry" ? t.item.title : t.item.text;
+    if(!confirm(`Permanently delete "${name}"?\n\nThis cannot be undone.`)) return;
+    TRASH.splice(Number(purge.dataset.purge), 1);
+    renderTrash(); saveTrash();
+  }
+});
+
+$("trash-empty").addEventListener("click", () => {
+  if(!TRASH.length) return;
+  if(!confirm(`Permanently delete all ${TRASH.length} item(s) in Recently deleted?\n\nThis cannot be undone.`)) return;
+  TRASH = [];
+  renderTrash(); saveTrash();
+});
+
+/* ─── colour scheme ─── */
+const root = document.documentElement;
+const themeBtn = $("theme");
+const activeTheme = () =>
+  root.dataset.theme || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+const syncTheme = () => { themeBtn.textContent = activeTheme() === "dark" ? "Light" : "Dark"; };
+
+themeBtn.addEventListener("click", () => {
+  root.dataset.theme = activeTheme() === "dark" ? "light" : "dark";
+  syncTheme();
+});
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", syncTheme);
+syncTheme();
+
 renderProgress();
 renderLedger();
 loadProgress();
+loadEntries();
 </script>
 </body>
 </html>
