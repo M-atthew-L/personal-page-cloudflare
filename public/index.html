@@ -247,6 +247,28 @@ button.dot:hover{opacity:.6}
 }
 .tone:hover{color:var(--ink)}
 .tone[aria-pressed="true"]{color:var(--ink);border-bottom-color:var(--ink)}
+.group-label{
+  font-family:var(--f-util);font-size:.64rem;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--mute);margin:0 0 .55rem;
+}
+.toggle{
+  display:inline-flex;align-items:center;gap:.6rem;background:none;border:0;
+  cursor:pointer;padding:.25rem 0;font-family:var(--f-util);font-size:.66rem;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--mute);
+}
+.toggle:hover{color:var(--ink)}
+.toggle .box{
+  width:.85rem;height:.85rem;border:1.5px solid var(--rule-hard);
+  display:inline-block;position:relative;transition:background .15s,border-color .15s;
+}
+.toggle[aria-pressed="true"]{color:var(--ink)}
+.toggle[aria-pressed="true"] .box{background:var(--blue);border-color:var(--blue)}
+.toggle.pin[aria-pressed="true"] .box{background:var(--kind-project);border-color:var(--kind-project)}
+.toggle[aria-pressed="true"] .box::after{
+  content:"";position:absolute;left:.25rem;top:.05rem;
+  width:.2rem;height:.45rem;transform:rotate(45deg);
+  border:solid var(--paper);border-width:0 1.6px 1.6px 0;
+}
 .composer-actions{margin-left:auto;display:flex;gap:1.4rem}
 .linkbtn{
   background:none;border:0;cursor:pointer;padding:.25rem 0;
@@ -616,16 +638,12 @@ button.dot:hover{opacity:.6}
         </div>
 
         <div class="composer" id="entry-form" hidden>
+          <p class="group-label">Kind — pick one</p>
           <div class="tones" role="group" aria-label="Kind">
             <button class="tone" data-kind="project" aria-pressed="true"><span class="dot k-project"></span>Project</button>
             <button class="tone" data-kind="research" aria-pressed="false"><span class="dot k-research"></span>Research</button>
             <button class="tone" data-kind="writing" aria-pressed="false"><span class="dot k-writing"></span>Writing</button>
             <button class="tone" data-kind="poem" aria-pressed="false"><span class="dot k-poem"></span>Poem</button>
-          </div>
-
-          <div class="tones" role="group" aria-label="Visibility">
-            <button class="tone" id="e-draft" aria-pressed="false"><span class="dot idea"></span>Draft</button>
-            <button class="tone" id="e-pin" aria-pressed="false"><span class="dot k-project"></span>Pinned</button>
           </div>
 
           <div class="field-row">
@@ -665,7 +683,13 @@ button.dot:hover{opacity:.6}
             <p class="hint">One per line, as <code>Label | https://example.com</code>. A single link shows inline; several become a Sources list.</p>
           </div>
 
-          <div class="tones">
+          <div class="tones" style="margin-top:1.6rem">
+            <button class="toggle" id="e-draft" aria-pressed="false">
+              <span class="box" aria-hidden="true"></span>Draft
+            </button>
+            <button class="toggle pin" id="e-pin" aria-pressed="false">
+              <span class="box" aria-hidden="true"></span>Pinned
+            </button>
             <span class="composer-actions">
               <button class="linkbtn" id="entry-cancel">Cancel</button>
               <button class="linkbtn primary" id="entry-save">Add to index</button>
