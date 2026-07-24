@@ -109,6 +109,14 @@ function cleanEntries(list) {
       sort:  Number.isFinite(item.sort) ? Math.trunc(item.sort) : 0
     };
 
+    if (item.slug) {
+      const slug = str(item.slug, `${n} slug`, 80);
+      if (!/^[a-z0-9-]+$/.test(slug)) throw new Error(`${n} has an invalid slug.`);
+      out.slug = slug;
+    }
+    if (item.draft === true)  out.draft = true;
+    if (item.pinned === true) out.pinned = true;
+
     const sub = str(item.sub, `${n} description`, 400, false);
     if (sub) out.sub = sub;
 
@@ -271,6 +279,60 @@ async function handle(request, env, kvKey, cleaner, privateRead = false) {
    as IMAGES. Without that binding everything else still works;
    only uploads are unavailable, and they say so clearly.
    ────────────────────────────────────────────────────────── */
+/* Visitors get published pieces only. With the key, everything. */
+async function handleEntries(request, env) {
+  if (request.method === "GET" && authorised(request, env)) {
+    const stored = await env.PROGRESS_KV.get(ENTRIES_KEY, "json");
+    return json((stored ?? []).filter(e => !e.draft));
+  }
+  return handle(request, env, ENTRIES_KEY, cleanEntries);
+}
+
+const escAttr = s => String(s)
+  .replace(/&/g, "&amp;").replace(/</g, "&lt;")
+  .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+/* Crawlers don't run JavaScript, so the preview card for an
+   individual piece is stitched into the HTML here. */
+async function withPreview(response, request, env, pathname) {
+  const origin = new URL(request.url).origin;
+  const site   = await env.PROGRESS_KV.get(SITE_KEY, "json");
+
+  let title = site?.name ? `${site.name} — index` : "Personal site";
+  let desc  = site?.intro || "";
+  let image = "";
+
+  if (pathname.startsWith("/p/")) {
+    const slug    = decodeURIComponent(pathname.slice(3));
+    const entries = (await env.PROGRESS_KV.get(ENTRIES_KEY, "json")) ?? [];
+    const entry   = entries.find(e => e.slug === slug && !e.draft);
+
+    if (entry) {
+      title = site?.name ? `${entry.title} — ${site.name}` : entry.title;
+      desc  = entry.sub || desc;
+      const first = (entry.images ?? [])[0];
+      if (first) image = first.src.startsWith("/") ? origin + first.src : first.src;
+    }
+  }
+
+  const tags = [
+    `<meta property="og:title" content="${escAttr(title)}">`,
+    `<meta property="og:description" content="${escAttr(desc)}">`,
+    `<meta property="og:url" content="${escAttr(origin + pathname)}">`,
+    `<meta name="description" content="${escAttr(desc)}">`,
+    image ? `<meta property="og:image" content="${escAttr(image)}">` : ""
+  ].join("");
+
+  return new HTMLRewriter()
+    .on("title", { element: el => el.setInnerContent(title) })
+    /* drop the static homepage tags so they can't duplicate */
+    .on('meta[property="og:title"]',       { element: el => el.remove() })
+    .on('meta[property="og:description"]', { element: el => el.remove() })
+    .on('meta[name="description"]',        { element: el => el.remove() })
+    .on("head", { element: el => el.append(tags, { html: true }) })
+    .transform(response);
+}
+
 async function handleUpload(request, env) {
   const problem = authorised(request, env);
   if (problem) return json({ error: problem }, problem === "Wrong key." ? 401 : 500);
@@ -328,9 +390,15 @@ export default {
     }
 
     if (pathname === "/api/progress") return handle(request, env, PROGRESS_KEY, cleanProgress);
-    if (pathname === "/api/entries")  return handle(request, env, ENTRIES_KEY,  cleanEntries);
+    if (pathname === "/api/entries")  return handleEntries(request, env);
     if (pathname === "/api/trash")    return handle(request, env, TRASH_KEY,    cleanTrash, true);
     if (pathname === "/api/site")     return handleSite(request, env);
+
+    /* client-side routes: serve the app shell, with its own preview */
+    if (pathname.startsWith("/p/") || pathname === "/about" || pathname === "/edit") {
+      const shell = await env.ASSETS.fetch(new Request(new URL("/", request.url), request));
+      return withPreview(shell, request, env, pathname);
+    }
 
     return env.ASSETS.fetch(request);
   }
