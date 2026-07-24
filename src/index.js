@@ -24,6 +24,14 @@ const MAX_SHORT    = 300;
 const MAX_BODY     = 40000;
 const MAX_LINKS    = 25;
 const MAX_TRASH    = 50;
+const MAX_IMAGES   = 12;
+const MAX_UPLOAD   = 8 * 1024 * 1024;          // 8 MB after the browser resize
+const IMAGE_TYPES  = {
+  "image/jpeg": "jpg",
+  "image/png":  "png",
+  "image/webp": "webp",
+  "image/gif":  "gif"
+};
 
 const json = (data, status = 200) =>
   new Response(JSON.stringify(data), {
@@ -78,6 +86,13 @@ function cleanProgress(list) {
   });
 }
 
+function safeSrc(value, label) {
+  const s = str(value, label, 2000);
+  if (s.startsWith("/img/")) return s;                    // uploaded to R2
+  if (/^https?:\/\//i.test(s)) return s;                  // hosted elsewhere
+  throw new Error(`${label} must be an uploaded image or an http(s) URL.`);
+}
+
 function cleanEntries(list) {
   if (!Array.isArray(list)) throw new Error("Expected a list.");
   if (list.length > MAX_ENTRIES) throw new Error(`Too many entries (limit ${MAX_ENTRIES}).`);
@@ -118,6 +133,16 @@ function cleanEntries(list) {
         label: str(item.link.label, `${n} link label`, 200),
         href:  safeHref(item.link.href, `${n} link`)
       };
+    }
+
+    if (Array.isArray(item.images) && item.images.length) {
+      if (item.images.length > MAX_IMAGES) throw new Error(`${n} has too many images.`);
+      out.images = item.images.map((im, j) => {
+        const row = { src: safeSrc(im?.src, `${n}, image ${j + 1}`) };
+        const alt = str(im?.alt, `${n}, image ${j + 1} caption`, 300, false);
+        if (alt) row.alt = alt;
+        return row;
+      });
     }
 
     if (Array.isArray(item.links) && item.links.length) {
@@ -241,9 +266,66 @@ async function handle(request, env, kvKey, cleaner, privateRead = false) {
   return json({ error: "Use GET or PUT." }, 405);
 }
 
+/* ── image uploads ─────────────────────────────────────────
+   Photos are too big for KV, so they go to an R2 bucket bound
+   as IMAGES. Without that binding everything else still works;
+   only uploads are unavailable, and they say so clearly.
+   ────────────────────────────────────────────────────────── */
+async function handleUpload(request, env) {
+  const problem = authorised(request, env);
+  if (problem) return json({ error: problem }, problem === "Wrong key." ? 401 : 500);
+
+  if (!env.IMAGES) {
+    return json({
+      error: "No image storage. Create an R2 bucket and bind it as IMAGES in wrangler.jsonc."
+    }, 501);
+  }
+
+  const type = (request.headers.get("Content-Type") || "").split(";")[0].trim();
+  if (!IMAGE_TYPES[type]) {
+    return json({ error: "Images must be JPEG, PNG, WebP, or GIF." }, 415);
+  }
+
+  const bytes = await request.arrayBuffer();
+  if (!bytes.byteLength) return json({ error: "That file was empty." }, 400);
+  if (bytes.byteLength > MAX_UPLOAD) {
+    return json({ error: "That image is over 8 MB, even after resizing." }, 413);
+  }
+
+  const key = `${Date.now().toString(36)}-${crypto.randomUUID().slice(0, 8)}.${IMAGE_TYPES[type]}`;
+  await env.IMAGES.put(key, bytes, {
+    httpMetadata: { contentType: type, cacheControl: "public, max-age=31536000, immutable" }
+  });
+
+  return json({ src: `/img/${key}` });
+}
+
+async function serveImage(pathname, env) {
+  if (!env.IMAGES) return new Response("Not found", { status: 404 });
+
+  const key = decodeURIComponent(pathname.slice("/img/".length));
+  if (!key || key.includes("/")) return new Response("Not found", { status: 404 });
+
+  const object = await env.IMAGES.get(key);
+  if (!object) return new Response("Not found", { status: 404 });
+
+  const headers = new Headers();
+  object.writeHttpMetadata(headers);
+  headers.set("etag", object.httpEtag);
+  headers.set("Cache-Control", "public, max-age=31536000, immutable");
+  return new Response(object.body, { headers });
+}
+
 export default {
   async fetch(request, env) {
     const { pathname } = new URL(request.url);
+
+    if (pathname === "/api/upload" && request.method === "POST") {
+      return handleUpload(request, env);
+    }
+    if (pathname.startsWith("/img/") && request.method === "GET") {
+      return serveImage(pathname, env);
+    }
 
     if (pathname === "/api/progress") return handle(request, env, PROGRESS_KEY, cleanProgress);
     if (pathname === "/api/entries")  return handle(request, env, ENTRIES_KEY,  cleanEntries);

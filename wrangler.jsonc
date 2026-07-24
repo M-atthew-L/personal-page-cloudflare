@@ -20,4 +20,15 @@
       "id": "046d3857aad44fa4b62f560745d6b52f"
     }
   ]
+
+  /* ,
+  
+  Uncomment once an R2 bucket named site-images exists.
+  ,"r2_buckets": [
+    {
+      "binding": "IMAGES",
+      "bucket_name": "site-images"
+    }
+  ]
+  */
 }
