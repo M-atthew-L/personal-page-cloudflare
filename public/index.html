@@ -246,10 +246,15 @@ button.dot:hover{opacity:.6}
 .trash-when{font-family:var(--f-util);font-size:.66rem;color:var(--mute)}
 
 .theme-toggle{
-  background:none;border:0;padding:.2rem 0;cursor:pointer;font:inherit;
-  color:var(--mute);border-bottom:1px solid transparent;
+  background:none;border:0;padding:0;cursor:pointer;color:var(--mute);
+  display:inline-flex;align-items:center;transition:color .15s;
 }
 .theme-toggle:hover{color:var(--ink)}
+.theme-toggle svg{
+  width:1.05rem;height:1.05rem;display:block;
+  fill:none;stroke:currentColor;stroke-width:1.5;
+  stroke-linecap:round;stroke-linejoin:round;
+}
 
 .unlock{display:flex;flex-wrap:wrap;gap:1rem;align-items:center;margin-top:1.3rem}
 .unlock input{
@@ -289,7 +294,7 @@ button.dot:hover{opacity:.6}
   border-top:1px solid var(--rule-hard);
   /* Set --ledger-height:none in :root to let the page scroll instead. */
   max-height:var(--ledger-height,34rem);
-  overflow-y:auto;overscroll-behavior:contain;
+  overflow-y:auto;overscroll-behavior:auto;   /* scroll chains to the page at the ends */
   scrollbar-width:thin;scrollbar-color:var(--rule-hard) transparent;
   padding-bottom:2.5rem;
 }
@@ -416,7 +421,7 @@ button.dot:hover{opacity:.6}
     <nav class="nav" aria-label="Sections">
       <button data-view="index" aria-current="true">Index</button>
       <button data-view="about">About</button>
-      <button class="theme-toggle" id="theme" aria-label="Switch colour scheme">Dark</button>
+      <button class="theme-toggle" id="theme" aria-label="Switch colour scheme" title="Switch colour scheme"></button>
     </nav>
   </header>
 
@@ -425,8 +430,46 @@ button.dot:hover{opacity:.6}
     <!-- ══ INDEX ══ -->
     <div id="view-index">
       <section class="statement">
-        <h1>I build small things and <em>write down</em> what happens.</h1>
-        <p>Everything lives in one list — projects, open research, and thoughts, newest first. Blue ink is work and prose. Pink is poems.</p>
+        <h1 id="statement-title">I build small things and <em>write down</em> what happens.</h1>
+        <p id="statement-intro">Everything lives in one list — projects, open research, and thoughts, newest first. Blue ink is work and prose. Pink is poems.</p>
+
+        <button class="progress-add" id="site-edit" hidden>
+          <span class="plus" aria-hidden="true">+</span> Edit site details
+        </button>
+
+        <div class="composer" id="site-form" hidden>
+          <div class="field">
+            <label for="s-name">Name</label>
+            <input id="s-name" type="text" autocomplete="off">
+          </div>
+          <div class="field">
+            <label for="s-headline">Headline</label>
+            <input id="s-headline" type="text" autocomplete="off">
+            <p class="hint">Wrap words in *asterisks* to print them in blue ink.</p>
+          </div>
+          <div class="field">
+            <label for="s-intro">Subheading</label>
+            <textarea id="s-intro" style="min-height:4.5rem"></textarea>
+          </div>
+          <div class="field">
+            <label for="s-about">About</label>
+            <textarea id="s-about"></textarea>
+            <p class="hint">Leave a blank line between paragraphs.</p>
+          </div>
+          <div class="field">
+            <label for="s-contact">Contact</label>
+            <textarea id="s-contact" style="min-height:5rem"></textarea>
+            <p class="hint">One per line, as <code>Label | text | https://link</code>. The link is optional — an address containing @ becomes an email link automatically.</p>
+          </div>
+          <div class="tones">
+            <span class="composer-actions">
+              <button class="linkbtn" id="site-cancel">Cancel</button>
+              <button class="linkbtn primary" id="site-save">Save details</button>
+            </span>
+          </div>
+        </div>
+
+        <p class="progress-status" id="site-status" role="status" aria-live="polite"></p>
       </section>
 
       <section class="progress" aria-labelledby="progress-label">
@@ -544,13 +587,8 @@ button.dot:hover{opacity:.6}
     <div id="view-about" hidden>
       <section class="about">
         <h2>About</h2>
-        <p>I'm a [what you do] based in [where you are]. I spend most of my time making software that's smaller than it probably should be, and the rest of it reading and writing.</p>
-        <p>I care about tools that respect the person using them, work that can be finished, and sentences that don't waste anyone's afternoon. If you're working on something in that neighbourhood, I'd like to hear about it.</p>
-        <ul class="contact">
-          <li><span>Email</span> <a href="mailto:you@example.com">you@example.com</a></li>
-          <li><span>Code</span> <a href="https://github.com/">github.com/yourname</a></li>
-          <li><span>Elsewhere</span> <a href="#">@yourname</a></li>
-        </ul>
+        <div id="about-body"></div>
+        <ul class="contact" id="contact-list"></ul>
       </section>
     </div>
 
@@ -604,6 +642,26 @@ let PROGRESS = [
    links:   optional list of sources. Best on research entries.
    link:    optional single link, e.g. a project's live URL.
    ═══════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════
+   SITE — the name, headline, subheading, and About copy.
+   Editable on the page in edit mode; this is the fallback
+   if the server can't be reached.
+   ═══════════════════════════════════════════════════════════ */
+let SITE = {
+  name: "Your Name",
+  headline: "I build small things and *write down* what happens.",
+  intro: "Everything lives in one list \u2014 projects, open research, and thoughts, newest first. Blue ink is work and prose. Pink is poems.",
+  about: [
+    "I'm a [what you do] based in [where you are]. I spend most of my time making software that's smaller than it probably should be, and the rest of it reading and writing.",
+    "I care about tools that respect the person using them, work that can be finished, and sentences that don't waste anyone's afternoon. If you're working on something in that neighbourhood, I'd like to hear about it."
+  ],
+  contact: [
+    {label:"Email",     text:"you@example.com",      href:"mailto:you@example.com"},
+    {label:"Code",      text:"github.com/yourname",  href:"https://github.com/"},
+    {label:"Elsewhere", text:"@yourname",            href:"#"}
+  ]
+};
+
 let ENTRIES = [
   {
     kind:"research", title:"Offline-first sync without a server", date:"Ongoing", sort:20260710,
@@ -817,6 +875,7 @@ async function tryUnlock(){
       $("unlock").hidden = true;
       renderProgress();
       renderLedger();
+      renderSite();
       loadTrash();
       return say("Editing on");
     }
@@ -1225,12 +1284,106 @@ $("trash-empty").addEventListener("click", () => {
   renderTrash(); saveTrash();
 });
 
+/* ─── site copy ─── */
+const emphasise = s => esc(s).replace(/\*([^*]+)\*/g, "<em>$1</em>");
+
+function renderSite(){
+  document.title = `${SITE.name} \u2014 index`;
+  $("wordmark").innerHTML = `<span class="regmark" aria-hidden="true"></span>${esc(SITE.name)}`;
+  $("statement-title").innerHTML = emphasise(SITE.headline || "");
+  $("statement-intro").textContent = SITE.intro || "";
+  $("about-body").innerHTML = (SITE.about || []).map(p => `<p>${esc(p)}</p>`).join("");
+  $("contact-list").innerHTML = (SITE.contact || []).map(c =>
+    `<li><span>${esc(c.label)}</span> ${
+      c.href ? `<a href="${esc(c.href)}">${esc(c.text)}</a>` : esc(c.text)
+    }</li>`).join("");
+  $("site-edit").hidden = !unlocked || !$("site-form").hidden;
+}
+
+async function loadSite(){
+  try{
+    const r = await fetch("/api/site");
+    if(!r.ok) return;
+    const s = await r.json();
+    if(s && typeof s === "object" && s.name){ SITE = s; renderSite(); }
+  }catch{}
+}
+
+async function saveSite(){
+  if(!unlocked) return;
+  $("site-status").textContent = "Saving\u2026";
+  try{
+    const r = await fetch("/api/site", {
+      method:"PUT",
+      headers:{"Content-Type":"application/json","X-Edit-Key":editKey},
+      body:JSON.stringify(SITE)
+    });
+    if(!r.ok){
+      const {error} = await r.json().catch(() => ({}));
+      $("site-status").textContent = error || "Save failed.";
+      return;
+    }
+    $("site-status").textContent = "Saved";
+  }catch{
+    $("site-status").textContent = "Offline \u2014 that change wasn't saved.";
+  }
+}
+
+function fillSiteForm(){
+  $("s-name").value     = SITE.name || "";
+  $("s-headline").value = SITE.headline || "";
+  $("s-intro").value    = SITE.intro || "";
+  $("s-about").value    = (SITE.about || []).join("\n\n");
+  $("s-contact").value  = (SITE.contact || [])
+    .map(c => [c.label, c.text, c.href].filter(Boolean).join(" | ")).join("\n");
+}
+
+function openSiteForm(open){
+  $("site-form").hidden = !open;
+  $("site-edit").hidden = open || !unlocked;
+  if(open){ fillSiteForm(); $("s-name").focus(); }
+}
+
+function parseContact(raw){
+  return raw.split("\n").map(line => {
+    const [label, text, href] = line.split("|").map(s => (s || "").trim());
+    if(!label || !text) return null;
+    const link = href || (text.includes("@") && !text.includes(" ") ? `mailto:${text}` : "");
+    return link ? {label, text, href:link} : {label, text};
+  }).filter(Boolean);
+}
+
+$("site-edit").addEventListener("click", () => openSiteForm(true));
+$("site-cancel").addEventListener("click", () => openSiteForm(false));
+$("site-save").addEventListener("click", () => {
+  SITE = {
+    name     : $("s-name").value.trim() || SITE.name,
+    headline : $("s-headline").value.trim(),
+    intro    : $("s-intro").value.trim(),
+    about    : $("s-about").value.split(/\n\s*\n/).map(s => s.trim()).filter(Boolean),
+    contact  : parseContact($("s-contact").value)
+  };
+  openSiteForm(false);
+  renderSite();
+  saveSite();
+});
+
 /* ─── colour scheme ─── */
 const root = document.documentElement;
 const themeBtn = $("theme");
+
+const MOON = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.6A8.5 8.5 0 0 1 9.4 3.5a8.5 8.5 0 1 0 11.1 11.1Z"/></svg>`;
+const SUN  = `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.4v2.2M12 19.4v2.2M4.2 4.2l1.6 1.6M18.2 18.2l1.6 1.6M2.4 12h2.2M19.4 12h2.2M4.2 19.8l1.6-1.6M18.2 5.8l1.6-1.6"/></svg>`;
+
 const activeTheme = () =>
   root.dataset.theme || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
-const syncTheme = () => { themeBtn.textContent = activeTheme() === "dark" ? "Light" : "Dark"; };
+
+function syncTheme(){
+  const dark = activeTheme() === "dark";
+  themeBtn.innerHTML = dark ? SUN : MOON;          // show where you're going
+  themeBtn.setAttribute("aria-label", dark ? "Switch to light" : "Switch to dark");
+  themeBtn.title = dark ? "Switch to light" : "Switch to dark";
+}
 
 themeBtn.addEventListener("click", () => {
   root.dataset.theme = activeTheme() === "dark" ? "light" : "dark";
@@ -1239,8 +1392,10 @@ themeBtn.addEventListener("click", () => {
 matchMedia("(prefers-color-scheme: dark)").addEventListener("change", syncTheme);
 syncTheme();
 
+renderSite();
 renderProgress();
 renderLedger();
+loadSite();
 loadProgress();
 loadEntries();
 </script>

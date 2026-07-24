@@ -13,6 +13,7 @@
 const PROGRESS_KEY = "progress:v1";
 const ENTRIES_KEY  = "entries:v1";
 const TRASH_KEY    = "trash:v1";
+const SITE_KEY     = "site:v1";
 
 const TONES = new Set(["building", "queued", "idea"]);
 const KINDS = new Set(["project", "research", "writing", "poem"]);
@@ -55,7 +56,9 @@ function str(value, label, max, required = true) {
 function safeHref(value, label) {
   const s = str(value, label, 2000);
   if (s === "#") return s;
-  if (!/^https?:\/\//i.test(s)) throw new Error(`${label} must start with http:// or https://`);
+  if (!/^(https?:\/\/|mailto:)/i.test(s)) {
+    throw new Error(`${label} must start with http://, https://, or mailto:`);
+  }
   return s;
 }
 
@@ -145,6 +148,65 @@ function cleanTrash(list) {
   });
 }
 
+/* The site copy is a single object rather than a list, so it
+   gets its own handler below. */
+function cleanSite(site) {
+  if (!site || typeof site !== "object" || Array.isArray(site)) {
+    throw new Error("Expected an object.");
+  }
+
+  const out = {
+    name:     str(site.name, "Name", 80),
+    headline: str(site.headline, "Headline", 300, false),
+    intro:    str(site.intro, "Subheading", 800, false),
+    about:    [],
+    contact:  []
+  };
+
+  if (Array.isArray(site.about)) {
+    if (site.about.length > 30) throw new Error("Too many About paragraphs.");
+    out.about = site.about
+      .map((p, i) => str(p, `About paragraph ${i + 1}`, 5000, false))
+      .filter(Boolean);
+  }
+
+  if (Array.isArray(site.contact)) {
+    if (site.contact.length > 12) throw new Error("Too many contact lines.");
+    out.contact = site.contact.map((c, i) => {
+      const n = `Contact line ${i + 1}`;
+      const row = { label: str(c?.label, `${n} label`, 60), text: str(c?.text, `${n} text`, 200) };
+      if (c?.href) row.href = safeHref(c.href, `${n} link`);
+      return row;
+    });
+  }
+
+  return out;
+}
+
+async function handleSite(request, env) {
+  if (request.method === "GET") {
+    const stored = await env.PROGRESS_KV.get(SITE_KEY, "json");
+    return json(stored ?? null);
+  }
+
+  if (request.method === "PUT") {
+    const problem = authorised(request, env);
+    if (problem) return json({ error: problem }, problem === "Wrong key." ? 401 : 500);
+
+    let site;
+    try {
+      site = cleanSite(await request.json());
+    } catch (err) {
+      return json({ error: err.message }, 400);
+    }
+
+    await env.PROGRESS_KV.put(SITE_KEY, JSON.stringify(site));
+    return json(site);
+  }
+
+  return json({ error: "Use GET or PUT." }, 405);
+}
+
 function authorised(request, env) {
   if (!env.EDIT_KEY) return "No EDIT_KEY secret is set on this Worker.";
   if (!safeEqual(request.headers.get("X-Edit-Key") ?? "", env.EDIT_KEY)) return "Wrong key.";
@@ -186,6 +248,7 @@ export default {
     if (pathname === "/api/progress") return handle(request, env, PROGRESS_KEY, cleanProgress);
     if (pathname === "/api/entries")  return handle(request, env, ENTRIES_KEY,  cleanEntries);
     if (pathname === "/api/trash")    return handle(request, env, TRASH_KEY,    cleanTrash, true);
+    if (pathname === "/api/site")     return handleSite(request, env);
 
     return env.ASSETS.fetch(request);
   }
