@@ -19,9 +19,21 @@
 
   --paper:#eceaf1;
   --ink:#15151b;
-  --blue:#2626c4;   /* projects, research, writing */
-  --pink:#c9325b;   /* poems only */
+  --blue:#3a34c4;   /* structural ink: links, focus, buttons */
   --mute:#5d5c6a;
+
+  /* one ink per kind, all held at a similar depth so the
+     index reads as a set rather than a fruit bowl */
+  --kind-project:#bb3a2a;
+  --kind-research:var(--blue);
+  --kind-writing:#16706a;
+  --kind-poem:#b4327d;
+  --pink:var(--kind-poem);
+
+  /* progress: filled = moving, open = waiting, grey = unstarted */
+  --state-building:var(--blue);
+  --state-queued:#96661a;
+  --state-idea:var(--mute);
   --body:#33333f;
   --rule:rgba(21,21,27,.16);
   --rule-hard:rgba(21,21,27,.34);
@@ -43,8 +55,15 @@
     --paper:#15151c;
     --ink:#e9e7f1;
     --blue:#a6a2ff;
-    --pink:#ff8fa6;
     --mute:#9b98a9;
+    --kind-project:#ff9484;
+    --kind-research:var(--blue);
+    --kind-writing:#5fd3c6;
+    --kind-poem:#ff8ac9;
+    --pink:var(--kind-poem);
+    --state-building:var(--blue);
+    --state-queued:#e0b155;
+    --state-idea:var(--mute);
     --body:#c8c6d4;
     --rule:rgba(233,231,241,.15);
     --rule-hard:rgba(233,231,241,.3);
@@ -57,8 +76,15 @@
   --paper:#15151c;
   --ink:#e9e7f1;
   --blue:#a6a2ff;
-  --pink:#ff8fa6;
   --mute:#9b98a9;
+  --kind-project:#ff9484;
+  --kind-research:var(--blue);
+  --kind-writing:#5fd3c6;
+  --kind-poem:#ff8ac9;
+  --pink:var(--kind-poem);
+  --state-building:var(--blue);
+  --state-queued:#e0b155;
+  --state-idea:var(--mute);
   --body:#c8c6d4;
   --rule:rgba(233,231,241,.15);
   --rule-hard:rgba(233,231,241,.3);
@@ -157,14 +183,20 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--blue);outline-offse
   width:.55rem;height:.55rem;border-radius:50%;
   transform:translateY(-.08em);mix-blend-mode:var(--blend);
 }
-.dot.building{background:var(--blue)}
-.dot.queued{border:1.5px solid var(--blue)}
-.dot.idea{border:1.5px solid var(--mute)}
+.dot.building{background:var(--state-building)}
+.dot.queued{border:1.5px solid var(--state-queued)}
+.dot.idea{border:1.5px solid var(--state-idea)}
+.dot.k-project{background:var(--kind-project)}
+.dot.k-research{background:var(--kind-research)}
+.dot.k-writing{background:var(--kind-writing)}
+.dot.k-poem{background:var(--kind-poem)}
 .progress-state{
   font-family:var(--f-util);font-size:.66rem;letter-spacing:.12em;
   text-transform:uppercase;color:var(--blue);mix-blend-mode:var(--blend);
 }
-.progress-state.idea{color:var(--mute)}
+.progress-state.building{color:var(--state-building)}
+.progress-state.queued{color:var(--state-queued)}
+.progress-state.idea{color:var(--state-idea)}
 .progress-text{max-width:54ch}
 .progress-note{display:block;color:var(--mute);font-size:.9375rem;margin-top:.2rem}
 
@@ -293,7 +325,7 @@ button.dot:hover{opacity:.6}
 .ledger{
   border-top:1px solid var(--rule-hard);
   /* Set --ledger-height:none in :root to let the page scroll instead. */
-  max-height:var(--ledger-height,34rem);
+  max-height:var(--ledger-height,46rem);
   overflow-y:auto;overscroll-behavior:auto;   /* scroll chains to the page at the ends */
   scrollbar-width:thin;scrollbar-color:var(--rule-hard) transparent;
   padding-bottom:2.5rem;
@@ -320,7 +352,10 @@ button.dot:hover{opacity:.6}
   font-family:var(--f-util);font-size:.66rem;letter-spacing:.12em;
   text-transform:uppercase;color:var(--blue);mix-blend-mode:var(--blend);
 }
-.row[data-kind="poem"] .row-kind{color:var(--pink)}
+.row[data-kind="project"]  .row-kind{color:var(--kind-project)}
+.row[data-kind="research"] .row-kind{color:var(--kind-research)}
+.row[data-kind="writing"]  .row-kind{color:var(--kind-writing)}
+.row[data-kind="poem"]     .row-kind{color:var(--kind-poem)}
 .row-title{font-size:1.125rem;line-height:1.35}
 .row[data-kind="poem"] .row-title{font-style:italic;font-weight:300}
 .row-sub{display:block;font-size:.9375rem;color:var(--mute);margin-top:.25rem;max-width:50ch}
@@ -351,7 +386,10 @@ button.dot:hover{opacity:.6}
 
 /* poems — own ink, own measure */
 .piece.poem{max-width:44ch}
-.piece.poem .piece-meta{color:var(--pink);mix-blend-mode:var(--blend)}
+.piece[data-kind="project"]  .piece-meta{color:var(--kind-project);mix-blend-mode:var(--blend)}
+.piece[data-kind="research"] .piece-meta{color:var(--kind-research);mix-blend-mode:var(--blend)}
+.piece[data-kind="writing"]  .piece-meta{color:var(--kind-writing);mix-blend-mode:var(--blend)}
+.piece.poem .piece-meta{color:var(--kind-poem);mix-blend-mode:var(--blend)}
 .piece.poem h2{font-weight:300;font-style:italic}
 .piece.poem .piece-body{white-space:pre-wrap;font-weight:300;font-size:1.25rem;line-height:1.85}
 .piece.poem::after{
@@ -431,7 +469,7 @@ button.dot:hover{opacity:.6}
     <div id="view-index">
       <section class="statement">
         <h1 id="statement-title">I build small things and <em>write down</em> what happens.</h1>
-        <p id="statement-intro">Everything lives in one list — projects, open research, and thoughts, newest first. Blue ink is work and prose. Pink is poems.</p>
+        <p id="statement-intro">Everything lives in one list — projects, open research, and thoughts, newest first. Each kind gets its own ink.</p>
 
         <button class="progress-add" id="site-edit" hidden>
           <span class="plus" aria-hidden="true">+</span> Edit site details
@@ -522,10 +560,10 @@ button.dot:hover{opacity:.6}
 
         <div class="composer" id="entry-form" hidden>
           <div class="tones" role="group" aria-label="Kind">
-            <button class="tone" data-kind="project" aria-pressed="true"><span class="dot building"></span>Project</button>
-            <button class="tone" data-kind="research" aria-pressed="false"><span class="dot building"></span>Research</button>
-            <button class="tone" data-kind="writing" aria-pressed="false"><span class="dot building"></span>Writing</button>
-            <button class="tone" data-kind="poem" aria-pressed="false"><span class="dot idea"></span>Poem</button>
+            <button class="tone" data-kind="project" aria-pressed="true"><span class="dot k-project"></span>Project</button>
+            <button class="tone" data-kind="research" aria-pressed="false"><span class="dot k-research"></span>Research</button>
+            <button class="tone" data-kind="writing" aria-pressed="false"><span class="dot k-writing"></span>Writing</button>
+            <button class="tone" data-kind="poem" aria-pressed="false"><span class="dot k-poem"></span>Poem</button>
           </div>
 
           <div class="field-row">
@@ -650,7 +688,7 @@ let PROGRESS = [
 let SITE = {
   name: "Your Name",
   headline: "I build small things and *write down* what happens.",
-  intro: "Everything lives in one list \u2014 projects, open research, and thoughts, newest first. Blue ink is work and prose. Pink is poems.",
+  intro: "Everything lives in one list \u2014 projects, open research, and thoughts, newest first. Each kind gets its own ink.",
   about: [
     "I'm a [what you do] based in [where you are]. I spend most of my time making software that's smaller than it probably should be, and the rest of it reading and writing.",
     "I care about tools that respect the person using them, work that can be finished, and sentences that don't waste anyone's afternoon. If you're working on something in that neighbourhood, I'd like to hear about it."
@@ -992,6 +1030,7 @@ function openPiece(id){
   if(!e) return;
   const isPoem = e.kind === "poem";
   piece.className = "piece" + (isPoem ? " poem" : "");
+  piece.dataset.kind = e.kind;
 
   let body;
   if(isPoem){
