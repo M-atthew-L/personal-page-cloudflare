@@ -1,14 +1,23 @@
 {
-  // Your site's project name. Becomes <name>.workers.dev
-  // Lowercase letters, numbers, and hyphens only.
-  "name": "projectsnprogress",
+  // Must match the first label of your workers.dev URL.
+  "name": "personal-site",
 
-  // Pins Cloudflare's runtime behaviour to this date.
-  // Leave it alone unless you have a reason to bump it.
   "compatibility_date": "2026-07-23",
 
-  // Everything in ./public gets served. index.html is the homepage.
+  // The Worker that handles /api/progress
+  "main": "./src/index.js",
+
   "assets": {
-    "directory": "./public"
-  }
+    "directory": "./public",
+    "binding": "ASSETS"
+  },
+
+  // Paste the namespace ID from the Cloudflare dashboard below.
+  // The binding name must stay PROGRESS_KV — the code looks for it.
+  "kv_namespaces": [
+    {
+      "binding": "PROGRESS_KV",
+      "id": "PASTE_YOUR_NAMESPACE_ID_HERE"
+    }
+  ]
 }

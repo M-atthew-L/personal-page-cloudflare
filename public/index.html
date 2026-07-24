@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Matthew Lee — index</title>
+<title>Your Name — index</title>
 <meta name="description" content="Projects, research, and thoughts.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -179,6 +179,16 @@ button.dot:hover{opacity:.6}
 .linkbtn.primary{color:var(--blue)}
 .export{margin-top:1.4rem}
 .export p{margin:0 0 .5rem;font-size:.9375rem;color:var(--mute);max-width:52ch}
+.unlock{display:flex;flex-wrap:wrap;gap:1rem;align-items:center;margin-top:1.3rem}
+.unlock input{
+  background:none;border:0;border-bottom:1px solid var(--rule-hard);width:15rem;
+  font-family:var(--f-util);font-size:.8rem;color:var(--ink);padding:.4rem 0;
+}
+.unlock input:focus{outline:0;border-bottom-color:var(--blue)}
+.progress-status{
+  font-family:var(--f-util);font-size:.66rem;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--mute);
+}
 
 /* ─────────────────────────────────────────────
    INDEX
@@ -305,7 +315,7 @@ button.dot:hover{opacity:.6}
 
   <header class="masthead">
     <button class="wordmark" id="wordmark" aria-label="Home">
-      <span class="regmark" aria-hidden="true"></span>Matthew Lee
+      <span class="regmark" aria-hidden="true"></span>Your Name
     </button>
     <nav class="nav" aria-label="Sections">
       <button data-view="index" aria-current="true">Index</button>
@@ -326,7 +336,7 @@ button.dot:hover{opacity:.6}
         <p class="plate-label" id="progress-label">Progress</p>
         <ul class="progress-list" id="progress-list"></ul>
 
-        <button class="progress-add" id="progress-add">
+        <button class="progress-add" id="progress-add" hidden>
           <span class="plus" aria-hidden="true">+</span> Add an item
         </button>
 
@@ -345,10 +355,13 @@ button.dot:hover{opacity:.6}
           </div>
         </div>
 
-        <div class="export" id="export" hidden>
-          <p>Changes live in this browser tab only. Copy the list and paste it over the <code>PROGRESS</code> array in the file to keep them.</p>
-          <button class="linkbtn primary" id="copy-list">Copy updated list →</button>
+        <div class="unlock" id="unlock" hidden>
+          <input id="edit-key" type="password" autocomplete="current-password"
+                 placeholder="Edit key" aria-label="Edit key">
+          <button class="linkbtn primary" id="unlock-go">Unlock editing</button>
         </div>
+
+        <p class="progress-status" id="progress-status" role="status" aria-live="polite"></p>
       </section>
 
       <section aria-labelledby="index-label">
@@ -554,36 +567,118 @@ const TONES = ["building","queued","idea"];
 
 let uid = 0;
 PROGRESS.forEach(p => p.id = ++uid);
-let dirty = false;
 
+let unlocked = false;   // set once the edit key is accepted
+let editKey  = null;
+
+const $   = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"]/g, c =>
   ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-
 const byState = (a,b) => STATES[a.state].order - STATES[b.state].order;
+const say = msg => { $("progress-status").textContent = msg; };
+
+/* strip the local-only id before anything goes over the wire */
+const payload = () => PROGRESS.slice().sort(byState)
+  .map(({state,text,note}) => note ? {state,text,note} : {state,text});
 
 function renderProgress(){
-  document.getElementById("progress-list").innerHTML = PROGRESS
-    .slice().sort(byState)
-    .map(p => `
+  $("progress-list").innerHTML = PROGRESS.slice().sort(byState).map(p => `
       <li>
-        <button class="dot ${p.state}" data-retone="${p.id}"
-                title="Change ink tone" aria-label="Change tone of: ${esc(p.text)}"></button>
+        ${unlocked
+          ? `<button class="dot ${p.state}" data-retone="${p.id}"
+                     title="Change ink tone" aria-label="Change tone of: ${esc(p.text)}"></button>`
+          : `<span class="dot ${p.state}" aria-hidden="true"></span>`}
         <span class="progress-state ${p.state}">${STATES[p.state].label}</span>
         <span class="progress-text">${esc(p.text)}${p.note ? `<span class="progress-note">${esc(p.note)}</span>` : ""}</span>
-        <button class="row-x" data-remove="${p.id}"
-                title="Remove" aria-label="Remove: ${esc(p.text)}">✕</button>
+        ${unlocked
+          ? `<button class="row-x" data-remove="${p.id}"
+                     title="Remove" aria-label="Remove: ${esc(p.text)}">\u2715</button>`
+          : ""}
       </li>`).join("");
-  document.getElementById("export").hidden = !dirty;
+  $("progress-add").hidden = !unlocked || !$("composer").hidden;
 }
 
+/* ─── server ─────────────────────────────────────────────
+   GET is public so visitors see the current list.
+   PUT needs the key, checked by the Worker.
+   If either fails, the page falls back to the PROGRESS
+   array above, so the site never renders empty.
+   ──────────────────────────────────────────────────────── */
+async function loadProgress(){
+  try{
+    const r = await fetch("/api/progress");
+    if(!r.ok) return;
+    const list = await r.json();
+    if(Array.isArray(list) && list.length){
+      PROGRESS = list.map(p => ({...p, id: ++uid}));
+      renderProgress();
+    }
+  }catch{ /* offline or not deployed yet — keep the built-in list */ }
+}
+
+async function saveProgress(){
+  if(!unlocked) return;
+  say("Saving\u2026");
+  try{
+    const r = await fetch("/api/progress", {
+      method:"PUT",
+      headers:{"Content-Type":"application/json","X-Edit-Key":editKey},
+      body:JSON.stringify(payload())
+    });
+    if(r.status === 401){
+      unlocked = false; editKey = null;
+      renderProgress();
+      $("unlock").hidden = false;
+      return say("Key rejected. Unlock again.");
+    }
+    if(!r.ok){
+      const {error} = await r.json().catch(() => ({}));
+      return say(error || "Save failed.");
+    }
+    say("Saved");
+  }catch{
+    say("Offline \u2014 that change wasn't saved.");
+  }
+}
+
+/* an accepted PUT is the unlock test: harmless, and it proves the key */
+async function tryUnlock(){
+  const key = $("edit-key").value.trim();
+  if(!key) return $("edit-key").focus();
+  say("Checking\u2026");
+  try{
+    const r = await fetch("/api/progress", {
+      method:"PUT",
+      headers:{"Content-Type":"application/json","X-Edit-Key":key},
+      body:JSON.stringify(payload())
+    });
+    if(r.ok){
+      editKey = key; unlocked = true;
+      $("edit-key").value = "";
+      $("unlock").hidden = true;
+      renderProgress();
+      return say("Editing on");
+    }
+    const {error} = await r.json().catch(() => ({}));
+    say(r.status === 401 ? "That key didn't work." : (error || "Couldn't unlock."));
+  }catch{
+    say("Couldn't reach the server.");
+  }
+}
+
+/* the edit controls only exist at yoursite.com/#edit */
+if(location.hash === "#edit") $("unlock").hidden = false;
+$("unlock-go").addEventListener("click", tryUnlock);
+$("edit-key").addEventListener("keydown", e => { if(e.key === "Enter") tryUnlock(); });
+
 /* ─── composer ─── */
-const composer = document.getElementById("composer");
-const input    = document.getElementById("composer-input");
+const composer = $("composer");
+const input    = $("composer-input");
 let newTone = "building";
 
 function openComposer(open){
   composer.hidden = !open;
-  document.getElementById("progress-add").hidden = open;
+  $("progress-add").hidden = open || !unlocked;
   if(open){ input.value = ""; input.focus(); }
 }
 
@@ -591,22 +686,22 @@ function addItem(){
   const text = input.value.trim();
   if(!text){ input.focus(); return; }
   PROGRESS.push({state:newTone, text, id:++uid});
-  dirty = true;
   openComposer(false);
   renderProgress();
-  document.getElementById("progress-add").focus();
+  saveProgress();
+  $("progress-add").focus();
 }
 
-document.getElementById("progress-add").addEventListener("click", () => openComposer(true));
-document.getElementById("composer-cancel").addEventListener("click", () => {
+$("progress-add").addEventListener("click", () => openComposer(true));
+$("composer-cancel").addEventListener("click", () => {
   openComposer(false);
-  document.getElementById("progress-add").focus();
+  $("progress-add").focus();
 });
-document.getElementById("composer-save").addEventListener("click", addItem);
+$("composer-save").addEventListener("click", addItem);
 
 input.addEventListener("keydown", e => {
   if(e.key === "Enter"){ e.preventDefault(); addItem(); }
-  if(e.key === "Escape"){ openComposer(false); document.getElementById("progress-add").focus(); }
+  if(e.key === "Escape"){ openComposer(false); $("progress-add").focus(); }
 });
 
 document.querySelectorAll(".tone").forEach(btn => {
@@ -618,43 +713,24 @@ document.querySelectorAll(".tone").forEach(btn => {
   });
 });
 
-/* ─── row actions: click the dot to retone, ✕ to remove ─── */
-document.getElementById("progress-list").addEventListener("click", ev => {
+/* ─── row actions: click the dot to retone, \u2715 to remove ─── */
+$("progress-list").addEventListener("click", ev => {
+  if(!unlocked) return;
+
   const retone = ev.target.closest("[data-retone]");
   if(retone){
     const item = PROGRESS.find(p => p.id === Number(retone.dataset.retone));
     item.state = TONES[(TONES.indexOf(item.state) + 1) % TONES.length];
-    dirty = true;
-    return renderProgress();
+    renderProgress();
+    return saveProgress();
   }
+
   const remove = ev.target.closest("[data-remove]");
   if(remove){
     PROGRESS = PROGRESS.filter(p => p.id !== Number(remove.dataset.remove));
-    dirty = true;
     renderProgress();
+    saveProgress();
   }
-});
-
-/* ─── export: rebuild the array as source you can paste back ─── */
-function listSource(){
-  const q = s => '"' + String(s).replace(/\\/g,"\\\\").replace(/"/g,'\\"') + '"';
-  const rows = PROGRESS.slice().sort(byState).map(p =>
-    `  {state:${q(p.state)}, text:${q(p.text)}${p.note ? `,\n   note:${q(p.note)}` : ""}}`
-  ).join(",\n");
-  return `let PROGRESS = [\n${rows}\n];`;
-}
-
-document.getElementById("copy-list").addEventListener("click", async ev => {
-  const text = listSource();
-  try{
-    await navigator.clipboard.writeText(text);
-  }catch{
-    const ta = document.createElement("textarea");
-    ta.value = text; document.body.appendChild(ta);
-    ta.select(); document.execCommand("copy"); ta.remove();
-  }
-  ev.target.textContent = "Copied — paste it over the PROGRESS array";
-  setTimeout(() => { ev.target.textContent = "Copy updated list →"; }, 3000);
 });
 
 function renderLedger(){
@@ -716,6 +792,7 @@ document.getElementById("wordmark").addEventListener("click", () => show("index"
 
 renderProgress();
 renderLedger();
+loadProgress();
 </script>
 </body>
 </html>
